@@ -12,6 +12,7 @@ local Astronaut = class{}
 
 function Astronaut:init(name, level, color)
     assert(level)
+    self._type="astronaut"
     self._name = name or util.uuid("Astronaut")
     self._color = color or {255, 255, 255, 255}
     self._level = level
@@ -59,7 +60,7 @@ function Astronaut:draw()
     lg.setColor(self._color)
     lg.translate(x,y)
     lg.rotate(self._physics.body:getAngle())
-    lg.rectangle("fill", 0, 0, self._size,self._size)
+    lg.rectangle("fill", -self._size/2, -self._size/2, self._size,self._size)
 end
 
 function onHitAstronaut(a,b,coll)
@@ -76,9 +77,11 @@ function onHitAstronaut(a,b,coll)
 end
 
 function Astronaut:onCollidesWith(target,coll)
-    if (self._connectedTo[target:getName()]==nil
+    if (target._type=="astronaut" and
+        self._connectedTo[target:getName()]==nil
         and self:getName()=="player"
     ) then
+        self._connectedTo[target:getName()]=true
         self._level:doOnNextUpdate(
             function()
                 connectAstronauts(self,target)
@@ -98,16 +101,16 @@ function connectAstronauts(objA,objB)
 end
 
 function newRevoluteJoint(objA,objB, x1, y1, x2,y2)
+    local jointPadding = 3
     local bodyA=objA._physics.body
     local bodyB=objB._physics.body
     local aX, aY = bodyA:getPosition()
 
-
     print(objB:getName())
-    bodyB:setPosition(aX+x1-x2,aY+y1-y2)
+    bodyB:setPosition(aX+x1-x2+jointPadding,aY+y1-y2+jointPadding)
     local newJoint = lp.newRevoluteJoint(objA._physics.body,
         objB._physics.body,
-        aX+x1, aY+y1, false )
+        aX+x1+jointPadding, aY+y1+jointPadding, true )
 
 
     return newJoint

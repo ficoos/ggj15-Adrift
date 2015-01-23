@@ -4,6 +4,7 @@ local OrderedTable = require 'OrderedTable'
 local SpaceStation = require 'SpaceStation'
 local util = require 'util'
 local Camera = require 'hump.camera'
+local debugWorldDraw = require 'debugWorldDraw'
 
 local lg = love.graphics
 local lp = love.physics
@@ -102,6 +103,18 @@ function SpaceRescue:draw()
             lg.pop()
         end
     end
+    local joints=self._world:getJointList();
+
+    for _, joint in ipairs(joints) do
+        local x1,x2,y1,y2=joint:getAnchors()
+        lg.setColor(100,43,43,255)
+        lg.circle("fill", x1, x2, 5,5)
+
+        lg.setColor(100,150,200,255)
+        lg.circle("fill", y1, y2, 5,5)
+
+    end
+    debugWorldDraw(self._world,0,0,lw.getWidth(),lw.getHeight())
     self._camera:detach()
 end
 
