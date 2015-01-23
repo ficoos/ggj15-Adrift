@@ -6,9 +6,10 @@ local lp = love.physics
 
 local Star = class{}
 
-local G = 6.6726 * 1000000
+local G = 6.6726 * 100000
 
 function Star:init(name, level, x, y, radius, mass)
+    self._type = "Star"
     assert(level)
     assert(radius)
     assert(mass)
@@ -36,6 +37,10 @@ function Star:_set_up_physics()
     self._physics = {body=body, shape=shape, fixture=fixture}
 end
 
+function Star:get_position(dt)
+    return self._physics.body:getPosition()
+end
+
 function Star:update(dt)
 end
 
@@ -50,8 +55,8 @@ function Star:attract(b)
     local a = self._physics.body
     local x1, y1 = a:getPosition()
     local x2, y2 = b:getPosition()
-    local dx = x2 - x1
-    local dy = y2 - y1
+    local dx = (x2 - x1) / 10
+    local dy = (y2 - y1) / 10
     local dist_sqr = dy * dy + dx * dx
     local f = (G * b:getMass()) / dist_sqr
     local dir = util.angle_towards(x1, y1, x2, y2)

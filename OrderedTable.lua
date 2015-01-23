@@ -19,11 +19,19 @@ function OrderedTable_new(name)
         getName = function (self)
             return self[_keyName]
         end,
+        remove = function (self, other)
+            for i, obj in ipairs(self) do
+                if obj == other then
+                    return table.remove(self, i)
+                end
+            end
+        end,
     }
     self[_keyName] = name or util.uuid("OrderedTable")
     self = setmetatable(self, OrderedTable)
     return self
 end
+
 
 return OrderedTable_new
 

@@ -1,5 +1,6 @@
 local class = require 'hump.class'
 local util = require 'util'
+local Event = require 'Event'
 
 local lg = love.graphics
 local lp = love.physics
@@ -18,6 +19,7 @@ function Asteroid:init(world, radius, name)
     self:_set_up_physics()
     self._direction = 0
     self._speed = 0
+    self.onDestroy = Event()
 end
 
 function Asteroid:_set_up_physics()
@@ -44,6 +46,12 @@ function Asteroid:deactivate()
 end
 
 function Asteroid:update(dt)
+end
+
+function Asteroid:onCollidesWith(other, coll)
+    if other._type == "Star" then
+        self.onDestroy:emit(self)
+    end
 end
 
 function Asteroid:get_position()

@@ -19,12 +19,14 @@ local MAX_ASTEROID_RADIUS = 100
 local MIN_ASTEROID_SPEED = 50
 local MAX_ASTEROID_SPEED = 500
 local CAMERA_SPEED = 10
-local SUN_MASS = 5.97219 * 1000000
+local SUN_MASS = 5.97219 * 10000000
 
 local ZOOM_FACTOR = 1.2
 local MIN_ZOOM = 0.2
 local MAX_ZOOM = 2
 local ZOOM_SPEED = .005
+
+local show_phys_debug = false
 
 function SpaceRescue:enter(prev, ...)
     lp.setMeter(2)
@@ -33,12 +35,13 @@ function SpaceRescue:enter(prev, ...)
     self._onNextUpdate = {}
 
     self._drawables[1]=OrderedTable("sun")
-    self._drawables[1]=OrderedTable("station")
-    self._drawables[2]=OrderedTable("asteroids")
-    self._drawables[3]=OrderedTable("agents")
+    self._drawables[2]=OrderedTable("station")
+    self._drawables[3]=OrderedTable("asteroids")
+    self._drawables[4]=OrderedTable("agents")
 
     self._station = SpaceStation("Station", self, 30, 30)
     self._sun = Star("sun", self, 3000, -100, 1000, SUN_MASS)
+    self._drawables.sun[1] = self._sun
 
     local as1 = Astronaut("player",self,{255,255,0,255})
     local as2 = Astronaut(nil,self)
@@ -78,6 +81,9 @@ end
 function SpaceRescue:update(dt)
     for _, astro in ipairs(self._drawables.agents) do
         self._sun:attract(astro._physics.body)
+    end
+    for _, astero in ipairs(self._drawables.asteroids) do
+        self._sun:attract(astero._physics.body)
     end
     if self._camera.scale < self._zoom then
         self._camera.scale = math.min(self._camera.scale + ZOOM_SPEED, self._zoom)
@@ -140,7 +146,9 @@ function SpaceRescue:draw()
         lg.circle("fill", y1, y2, 5,5)
 
     end
-    debugWorldDraw(self._world,off_x - lw.getWidth() / self._camera.scale / 2,off_y - lw.getHeight() / self._camera.scale / 2,lw.getWidth() / self._camera.scale,lw.getHeight() / self._camera.scale)
+    if show_phys_debug then
+        debugWorldDraw(self._world,off_x - lw.getWidth() / self._camera.scale / 2,off_y - lw.getHeight() / self._camera.scale / 2,lw.getWidth() / self._camera.scale,lw.getHeight() / self._camera.scale)
+    end
     self._camera:detach()
 end
 
@@ -149,18 +157,22 @@ function SpaceRescue:_spawn_asteroid()
     if not ast then
         return
     end
+    ast.onDestroy(function()
+        self._drawables.asteroids:remove(ast)
+    end)
+    local scale = self._camera.scale
     local w, h = lw.getWidth(), lw.getHeight()
-    local radius = math.sqrt(w * w + h * h) + ast._radius
+    local radius = math.sqrt(w * w + h * h)
     local theta = math.random() * 2 * math.pi
     ast:set_position(
         self._camera:worldCoords(
-        radius * math.cos(theta) + lw.getWidth() / 2,
-        radius * math.sin(theta) + lw.getHeight() / 2
+        radius * math.cos(theta) + w / 2,
+        radius * math.sin(theta) + h / 2
     ))
     local x, y = ast:get_position()
     local dx, dy =  self._camera:worldCoords(
-        math.random() * w,
-        math.random() * h
+        w / 2,
+        h / 2
     )
     print(dx, dy, x, y)
 
@@ -179,6 +191,8 @@ end
 function SpaceRescue:keypressed(key)
     if key == "a" then
         self:_spawn_asteroid()
+    elseif key == "f1" then
+        show_phys_debug = not show_phys_debug
     end
 end
 
