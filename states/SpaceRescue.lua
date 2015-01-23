@@ -33,6 +33,7 @@ function SpaceRescue:enter(prev, ...)
 
     local as1 = Astronaut("player",self,{255,255,0,255})
     local as2 = Astronaut(nil,self)
+    local as3 = Astronaut(nil,self)
     self._player = as1
     self._camera = Camera(as1:get_position())
     self._bg = lg.newImage("data/gfx/space.jpg")
@@ -40,10 +41,12 @@ function SpaceRescue:enter(prev, ...)
 
     table.insert(self._drawables.agents, as1)
     table.insert(self._drawables.agents, as2)
+    table.insert(self._drawables.agents, as3)
     table.insert(self._drawables.station, self._station)
 
     as1:set_position(lw.getWidth()/2+100, lw.getHeight()/2)
     as2:set_position(lw.getWidth()/2-100, lw.getHeight()/2)
+    as3:set_position(lw.getWidth()/2+300, lw.getHeight()/2+300)
 end
 
 function SpaceRescue:_push_player()

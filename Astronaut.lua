@@ -20,6 +20,7 @@ function Astronaut:init(name, level, color)
     self._size = 50
     self._position = {0, 0 }
     self._connectedTo=OrderedTable("connectedTo")
+    self._lastInChain = self
     self:_set_up_physics()
 end
 
@@ -84,7 +85,8 @@ function Astronaut:onCollidesWith(target,coll)
         self._connectedTo[target:getName()]=true
         self._level:doOnNextUpdate(
             function()
-                connectAstronauts(self,target)
+                connectAstronauts(self._lastInChain,target)
+                self._lastInChain=target
             end
         )
     end;
