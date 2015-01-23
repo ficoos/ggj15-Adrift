@@ -12,9 +12,9 @@ local Astronaut = class{}
 
 function Astronaut:init(name, level, color)
     assert(level)
-    self._name= name or util.uuid("Astronaut")
+    self._name = name or util.uuid("Astronaut")
     self._color = color or {255, 255, 255, 255}
-    self.level = level
+    self._level = level
     self._world = level:getWorld()
     self._size = 50
     self._position = {0, 0 }
@@ -33,6 +33,7 @@ function Astronaut:_set_up_physics()
     local shape = lp.newRectangleShape(x, y, self._size, self._size)
     local fixture = lp.newFixture(body, shape, ASTRO_DENSITY)
     fixture:setUserData(self)
+--    fixture:setSensor(true)
 
     world:setCallbacks(onHitAstronaut)
     self._physics = {body=body, shape=shape, fixture=fixture}
@@ -56,26 +57,27 @@ end
 function Astronaut:draw()
     local x, y = self:get_position()
     lg.setColor(self._color)
-    lg.rectangle("fill", x, y, self._size,self._size)
+    lg.translate(x,y)
+    lg.rotate(self._physics.body:getAngle())
+    lg.rectangle("fill", 0, 0, self._size,self._size)
 end
 
 function onHitAstronaut(a,b,coll)
     local objA=a:getUserData()
     local objB=b:getUserData()
     if objA and objA.onCollidesWith then
-        objA.onCollidesWith(objB,coll)
+        objA:onCollidesWith(objB,coll)
     end
 
     if objB and objB.onCollidesWith then
-        objB.onCollidesWith(objA,coll)
+        objB:onCollidesWith(objA,coll)
     end
 
 end
 
 function Astronaut:onCollidesWith(target,coll)
-    print("a",target)
     if (self._connectedTo[target:getName()]==nil
-        and self.getName()=="player"
+        and self:getName()=="player"
     ) then
         self._level:doOnNextUpdate(
             function()
@@ -85,6 +87,7 @@ function Astronaut:onCollidesWith(target,coll)
     end;
 end
 
+--connect B to A
 function connectAstronauts(objA,objB)
     local newJoint = newRevoluteJoint(objA,objB,
         objA._size/2,
@@ -96,10 +99,11 @@ end
 
 function newRevoluteJoint(objA,objB, x1, y1, x2,y2)
     local bodyA=objA._physics.body
-    local bodyB=objA._physics.body
+    local bodyB=objB._physics.body
     local aX, aY = bodyA:getPosition()
 
-    print(aX+x1-x2,aY+y1-y2)
+
+    print(objB:getName())
     bodyB:setPosition(aX+x1-x2,aY+y1-y2)
     local newJoint = lp.newRevoluteJoint(objA._physics.body,
         objB._physics.body,
