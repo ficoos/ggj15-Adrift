@@ -7,7 +7,7 @@ local lw = love.window
 
 local SpaceRescue = {}
 
-local FORCE = 10000
+local FORCE = 50000
 
 function SpaceRescue:enter(prev, ...)
     lp.setMeter(2)
@@ -22,8 +22,9 @@ function SpaceRescue:_push_player()
     local ax, ay = self._astronaut:get_position()
     local theta = math.atan2(x - ax, ay -y) + (0.5 * math.pi)
 
-    local ix = -math.cos(theta) * FORCE
-    local iy = -math.sin(theta) * FORCE
+    local total_force = FORCE
+    local ix = -math.cos(theta) * total_force
+    local iy = -math.sin(theta) * total_force
     self._astronaut:apply_force(ix, iy)
 end
 
