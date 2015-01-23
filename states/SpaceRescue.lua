@@ -1,4 +1,5 @@
 local Astronaut = require 'Astronaut'
+local OrderedTable = require 'OrderedTable'
 
 local lg = love.graphics
 local lp = love.physics
@@ -7,25 +8,36 @@ local lw = love.window
 
 local SpaceRescue = {}
 
-local FORCE = 50000
+local FORCE = 10000
 
 function SpaceRescue:enter(prev, ...)
     lp.setMeter(2)
     self._world = lp.newWorld(0, 0, true)
-    self._astronaut = Astronaut(self._world)
-    self._drawables = {{self._astronaut}}
-    self._astronaut:set_position(lw.getWidth()/2, lw.getHeight()/2)
+    self._drawables = OrderedTable()
+
+
+    self._drawables[1]=OrderedTable("agents")
+    print(self._drawables[1],"aa")
+
+--    local as1 = Astronaut(self._world)
+--    local as2 = Astronaut(self._world)
+--
+--    table.insert(self._drawables.agents, as1)
+--    table.insert(self._drawables.agents, as2)
+--
+--
+--    as1:set_position(lw.getWidth()/2+100, lw.getHeight()/2)
+--    as2:set_position(lw.getWidth()/2-100, lw.getHeight()/2)
 end
 
 function SpaceRescue:_push_player()
     local x, y = lm.getPosition()
-    local ax, ay = self._astronaut:get_position()
+    local ax, ay = self._drawables.agents[1]:get_position()
     local theta = math.atan2(x - ax, ay -y) + (0.5 * math.pi)
 
-    local total_force = FORCE
-    local ix = -math.cos(theta) * total_force
-    local iy = -math.sin(theta) * total_force
-    self._astronaut:apply_force(ix, iy)
+    local ix = -math.cos(theta) * FORCE
+    local iy = -math.sin(theta) * FORCE
+    self._drawables.agents[1]:apply_force(ix, iy)
 end
 
 function SpaceRescue:update(dt)
