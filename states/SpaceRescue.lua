@@ -19,14 +19,20 @@ local MAX_ASTEROID_RADIUS = 100
 local MIN_ASTEROID_SPEED = 50
 local MAX_ASTEROID_SPEED = 500
 local CAMERA_SPEED = 10
-local SUN_MASS = 5.97219 * 10000000
+local SUN_MASS = 5.97219 * 1000000
 
 local ZOOM_FACTOR = 1.2
 local MIN_ZOOM = 0.2
 local MAX_ZOOM = 2
 local ZOOM_SPEED = .005
+local ASTRO_FRIENDS_NUM = 10
 
 local show_phys_debug = false
+local show_spawn_rect = false
+local SPAWN_RECT = {
+    -3000, 1000,
+    -2000, 2000
+}
 
 function SpaceRescue:enter(prev, ...)
     lp.setMeter(2)
@@ -40,12 +46,19 @@ function SpaceRescue:enter(prev, ...)
     self._drawables[4]=OrderedTable("agents")
 
     self._station = SpaceStation("Station", self, 30, 30)
-    self._sun = Star("sun", self, 3000, -100, 1000, SUN_MASS)
+    self._sun = Star("sun", self, 5000, -100, 2000, SUN_MASS)
     self._drawables.sun[1] = self._sun
 
     local as1 = Astronaut("player",self,{255,255,0,255})
-    local as2 = Astronaut(nil,self)
-    local as3 = Astronaut(nil,self)
+    table.insert(self._drawables.agents, as1)
+    for i=1,ASTRO_FRIENDS_NUM do
+        local as = Astronaut(nil,self)
+        as:set_position(
+            math.random(SPAWN_RECT[1], SPAWN_RECT[2]),
+            math.random(SPAWN_RECT[3], SPAWN_RECT[4])
+        )
+        table.insert(self._drawables.agents, as)
+    end
     self._player = as1
     self._camera = Camera(as1:get_position())
     self._zoom = 1
@@ -53,15 +66,10 @@ function SpaceRescue:enter(prev, ...)
     self._bg = lg.newImage("data/gfx/space.jpg")
     self._bg:setWrap("repeat", "repeat")
 
-    table.insert(self._drawables.agents, as1)
-    table.insert(self._drawables.agents, as2)
-    table.insert(self._drawables.agents, as3)
     table.insert(self._drawables.station, self._station)
 
     as1:set_position(lw.getWidth()/2+100, lw.getHeight()/2)
     as1:set_angle(0.3)
-    as2:set_position(lw.getWidth()/2-100, lw.getHeight()/2)
-    as3:set_position(lw.getWidth()/2+300, lw.getHeight()/2+300)
 end
 
 function SpaceRescue:_push_player()
@@ -149,6 +157,10 @@ function SpaceRescue:draw()
     if show_phys_debug then
         debugWorldDraw(self._world,off_x - lw.getWidth() / self._camera.scale / 2,off_y - lw.getHeight() / self._camera.scale / 2,lw.getWidth() / self._camera.scale,lw.getHeight() / self._camera.scale)
     end
+    lg.setColor(255, 0, 255, 255)
+    if show_spawn_rect then
+        lg.rectangle("line", SPAWN_RECT[1], SPAWN_RECT[3], SPAWN_RECT[2] - SPAWN_RECT[1], SPAWN_RECT[4] - SPAWN_RECT[3])
+    end
     self._camera:detach()
 end
 
@@ -193,6 +205,8 @@ function SpaceRescue:keypressed(key)
         self:_spawn_asteroid()
     elseif key == "f1" then
         show_phys_debug = not show_phys_debug
+    elseif key == "f2" then
+        show_spawn_rect = not show_spawn_rect
     end
 end
 
