@@ -19,6 +19,11 @@ local MIN_ASTEROID_SPEED = 50
 local MAX_ASTEROID_SPEED = 500
 local CAMERA_SPEED = 10
 
+local ZOOM_FACTOR = 1.2
+local MIN_ZOOM = 0.2
+local MAX_ZOOM = 2
+local ZOOM_SPEED = .005
+
 function SpaceRescue:enter(prev, ...)
     lp.setMeter(2)
     self._world = lp.newWorld(0, 0, true)
@@ -36,6 +41,8 @@ function SpaceRescue:enter(prev, ...)
     local as3 = Astronaut(nil,self)
     self._player = as1
     self._camera = Camera(as1:get_position())
+    self._zoom = 1
+    self._camera.scale = self._zoom
     self._bg = lg.newImage("data/gfx/space.jpg")
     self._bg:setWrap("repeat", "repeat")
 
@@ -65,6 +72,11 @@ function SpaceRescue:getWorld()
 end
 
 function SpaceRescue:update(dt)
+    if self._camera.scale < self._zoom then
+        self._camera.scale = math.min(self._camera.scale + ZOOM_SPEED, self._zoom)
+    elseif self._camera.scale > self._zoom then
+        self._camera.scale = math.max(self._camera.scale - ZOOM_SPEED, self._zoom)
+    end
     self._camera:lookAt(self._player:get_position())
     if (self._onNextUpdate) then
         for _, func in ipairs(self._onNextUpdate) do
@@ -92,13 +104,16 @@ end
 
 function SpaceRescue:draw()
     local off_x, off_y = self._camera:pos()
+    local scale = self._camera.scale
     local quad = lg.newQuad(
-        off_x, off_y,
-        lg.getWidth(), lg.getHeight(),
-        self._bg:getWidth(), self._bg:getHeight()
+        off_x - (lw.getWidth() / scale) / 2,
+        off_y - (lw.getHeight() / scale) / 2,
+        lg.getWidth() / self._camera.scale, lg.getHeight() / self._camera.scale,
+        self._bg:getWidth(),
+        self._bg:getHeight()
     )
     lg.setColor(255, 255, 255, 255)
-    lg.draw(self._bg, quad)
+    lg.draw(self._bg, quad, 0, 0, 0, self._camera.scale)
     self._camera:attach()
     for _, layer in ipairs(self._drawables) do
         for _, obj in ipairs(layer) do
@@ -118,7 +133,7 @@ function SpaceRescue:draw()
         lg.circle("fill", y1, y2, 5,5)
 
     end
-    debugWorldDraw(self._world,off_x - lw.getWidth() / 2,off_y - lw.getHeight() / 2,lw.getWidth(),lw.getHeight())
+    debugWorldDraw(self._world,off_x - lw.getWidth() / self._camera.scale / 2,off_y - lw.getHeight() / self._camera.scale / 2,lw.getWidth() / self._camera.scale,lw.getHeight() / self._camera.scale)
     self._camera:detach()
 end
 
@@ -164,7 +179,11 @@ function SpaceRescue:keyreleased(key)
 end
 
 function SpaceRescue:mousepressed(x, y, button)
-    print(x, y, button)
+    if button == "wd" then
+        self._zoom = math.min(self._zoom * ZOOM_FACTOR, MAX_ZOOM)
+    elseif button == "wu" then
+        self._zoom = math.max(self._zoom / ZOOM_FACTOR, MIN_ZOOM)
+    end
 end
 
 function SpaceRescue:mousereleased(x, y, button)
