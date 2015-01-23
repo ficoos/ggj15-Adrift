@@ -12,6 +12,8 @@ local SpaceRescue = {}
 
 local FORCE = 25000
 local MAX_ASTEROID_RADIUS = 100
+local MIN_ASTEROID_SPEED = 50
+local MAX_ASTEROID_SPEED = 500
 
 function SpaceRescue:enter(prev, ...)
     lp.setMeter(2)
@@ -80,7 +82,7 @@ function SpaceRescue:_spawn_asteroid()
         x,
         y
     ))
-    ast:set_speed(math.random(50, 500))
+    ast:set_speed(math.random(MIN_ASTEROID_SPEED, MAX_ASTEROID_SPEED))
     ast:activate()
 
     table.insert(self._drawables.asteroids, ast)
