@@ -56,6 +56,10 @@ function Astronaut:set_position(x, y)
     return self._physics.body:setPosition(x, y)
 end
 
+function Astronaut:set_angle(angle)
+    return self._physics.body:setAngle(angle)
+end
+
 function Astronaut:draw()
     local x, y = self:get_position()
     lg.setColor(self._color)
@@ -103,16 +107,21 @@ function connectAstronauts(objA,objB)
 end
 
 function newRevoluteJoint(objA,objB, x1, y1, x2,y2)
-    local jointPadding = 3
+    local jointPadding = 0
     local bodyA=objA._physics.body
     local bodyB=objB._physics.body
     local aX, aY = bodyA:getPosition()
+    local angle = bodyA:getAngle()
 
-    print(objB:getName())
-    bodyB:setPosition(aX+x1-x2+jointPadding,aY+y1-y2+jointPadding)
+    local destinationX,destinationY=aX+x1-x2+jointPadding,aY+y1-y2+jointPadding
+    local rotatedX,rotatedY=util.rotateAroundPoint(angle,aX,aY,destinationX,destinationY)
+    local jointX,jointY=aX+x1+jointPadding, aY+y1+jointPadding
+    local rotatedJointX,rotatedJointY=util.rotateAroundPoint(angle,aX,aY,jointX,jointY)
+
+    bodyB:setPosition(rotatedX,rotatedY)
+    bodyB:setAngle(angle)
     local newJoint = lp.newRevoluteJoint(objA._physics.body,
-        objB._physics.body,
-        aX+x1+jointPadding, aY+y1+jointPadding, true )
+        objB._physics.body, rotatedJointX,rotatedJointY, true )
 
 
     return newJoint

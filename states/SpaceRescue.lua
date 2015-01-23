@@ -45,6 +45,7 @@ function SpaceRescue:enter(prev, ...)
     table.insert(self._drawables.station, self._station)
 
     as1:set_position(lw.getWidth()/2+100, lw.getHeight()/2)
+    as1:set_angle(0.3)
     as2:set_position(lw.getWidth()/2-100, lw.getHeight()/2)
     as3:set_position(lw.getWidth()/2+300, lw.getHeight()/2+300)
 end
