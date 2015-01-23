@@ -1,5 +1,7 @@
 local Astronaut = require 'Astronaut'
+local Asteroid = require 'Asteroid'
 local OrderedTable = require 'OrderedTable'
+local util = require 'util'
 
 local lg = love.graphics
 local lp = love.physics
@@ -8,7 +10,8 @@ local lw = love.window
 
 local SpaceRescue = {}
 
-local FORCE = 10000
+local FORCE = 25000
+local MAX_ASTEROID_RADIUS = 100
 
 function SpaceRescue:enter(prev, ...)
     lp.setMeter(2)
@@ -16,14 +19,14 @@ function SpaceRescue:enter(prev, ...)
     self._drawables = OrderedTable()
 
 
-    self._drawables[1]=OrderedTable("agents")
+    self._drawables[1]=OrderedTable("asteroids")
+    self._drawables[2]=OrderedTable("agents")
 
     local as1 = Astronaut(self._world)
     local as2 = Astronaut(self._world)
 
     table.insert(self._drawables.agents, as1)
     table.insert(self._drawables.agents, as2)
-
 
     as1:set_position(lw.getWidth()/2+100, lw.getHeight()/2)
     as2:set_position(lw.getWidth()/2-100, lw.getHeight()/2)
@@ -32,7 +35,7 @@ end
 function SpaceRescue:_push_player()
     local x, y = lm.getPosition()
     local ax, ay = self._drawables.agents[1]:get_position()
-    local theta = math.atan2(x - ax, ay -y) + (0.5 * math.pi)
+    local theta = util.angle_towards(ax, ay, x, y)
 
     local ix = -math.cos(theta) * FORCE
     local iy = -math.sin(theta) * FORCE
@@ -43,6 +46,11 @@ function SpaceRescue:update(dt)
     self._world:update(dt)
     if lm.isDown("l") then
         self:_push_player()
+    end
+    for _, layer in ipairs(self._drawables) do
+        for _, obj in ipairs(layer) do
+            obj:update(dt)
+        end
     end
 end
 
@@ -56,12 +64,35 @@ function SpaceRescue:draw()
     end
 end
 
+function SpaceRescue:_spawn_asteroid()
+    local ast = Asteroid(self._world, math.random(5, MAX_ASTEROID_RADIUS))
+    if not ast then
+        return
+    end
+    local w, h = lw.getWidth(), lw.getHeight()
+    local radius = math.sqrt(w * w + h * h) + MAX_ASTEROID_RADIUS
+    local theta = math.random() * 2 * math.pi
+    ast:set_position(radius * math.cos(theta), radius * math.sin(theta))
+    local x, y = ast:get_position()
+    ast:set_direction(util.angle_towards(
+        math.random() * w,
+        math.random() * h,
+        x,
+        y
+    ))
+    ast:set_speed(math.random(50, 500))
+    ast:activate()
+
+    table.insert(self._drawables.asteroids, ast)
+end
+
 function SpaceRescue:keypressed(key)
-    print(key)
+    if key == "a" then
+        self:_spawn_asteroid()
+    end
 end
 
 function SpaceRescue:keyreleased(key)
-    print(key)
 end
 
 function SpaceRescue:mousepressed(x, y, button)
