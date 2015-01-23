@@ -19,13 +19,13 @@ function SpaceRescue:enter(prev, ...)
     lp.setMeter(2)
     self._world = lp.newWorld(0, 0, true)
     self._drawables = OrderedTable()
-
+    self._onNextUpdate = {}
 
     self._drawables[1]=OrderedTable("asteroids")
     self._drawables[2]=OrderedTable("agents")
 
-    local as1 = Astronaut(self._world)
-    local as2 = Astronaut(self._world)
+    local as1 = Astronaut("player",self,{255,255,0,255})
+    local as2 = Astronaut(nil,self)
 
     table.insert(self._drawables.agents, as1)
     table.insert(self._drawables.agents, as2)
@@ -44,8 +44,19 @@ function SpaceRescue:_push_player()
     self._drawables.agents[1]:apply_force(ix, iy)
 end
 
+function SpaceRescue:getWorld()
+    return self._world
+end
+
 function SpaceRescue:update(dt)
+    if (self._onNextUpdate) then
+        for _, func in ipairs(self._onNextUpdate) do
+            func()
+        end
+    end
+    self._onNextUpdate={}
     self._world:update(dt)
+
     if lm.isDown("l") then
         self:_push_player()
     end
@@ -54,6 +65,10 @@ function SpaceRescue:update(dt)
             obj:update(dt)
         end
     end
+end
+
+function SpaceRescue:doOnNextUpdate(func)
+    table.insert(self._onNextUpdate,func)
 end
 
 function SpaceRescue:draw()
