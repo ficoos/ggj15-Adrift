@@ -2,6 +2,7 @@ local Astronaut = require 'Astronaut'
 local Asteroid = require 'Asteroid'
 local OrderedTable = require 'OrderedTable'
 local SpaceStation = require 'SpaceStation'
+local Star = require 'Star'
 local util = require 'util'
 local Camera = require 'hump.camera'
 local debugWorldDraw = require 'debugWorldDraw'
@@ -18,6 +19,7 @@ local MAX_ASTEROID_RADIUS = 100
 local MIN_ASTEROID_SPEED = 50
 local MAX_ASTEROID_SPEED = 500
 local CAMERA_SPEED = 10
+local SUN_MASS = 5.97219 * 1000000
 
 local ZOOM_FACTOR = 1.2
 local MIN_ZOOM = 0.2
@@ -30,11 +32,13 @@ function SpaceRescue:enter(prev, ...)
     self._drawables = OrderedTable()
     self._onNextUpdate = {}
 
+    self._drawables[1]=OrderedTable("sun")
     self._drawables[1]=OrderedTable("station")
     self._drawables[2]=OrderedTable("asteroids")
     self._drawables[3]=OrderedTable("agents")
 
     self._station = SpaceStation("Station", self, 30, 30)
+    self._sun = Star("sun", self, 3000, -100, 1000, SUN_MASS)
 
     local as1 = Astronaut("player",self,{255,255,0,255})
     local as2 = Astronaut(nil,self)
@@ -72,6 +76,9 @@ function SpaceRescue:getWorld()
 end
 
 function SpaceRescue:update(dt)
+    for _, astro in ipairs(self._drawables.agents) do
+        self._sun:attract(astro._physics.body)
+    end
     if self._camera.scale < self._zoom then
         self._camera.scale = math.min(self._camera.scale + ZOOM_SPEED, self._zoom)
     elseif self._camera.scale > self._zoom then
@@ -179,9 +186,9 @@ function SpaceRescue:keyreleased(key)
 end
 
 function SpaceRescue:mousepressed(x, y, button)
-    if button == "wd" then
+    if button == "wu" then
         self._zoom = math.min(self._zoom * ZOOM_FACTOR, MAX_ZOOM)
-    elseif button == "wu" then
+    elseif button == "wd" then
         self._zoom = math.max(self._zoom / ZOOM_FACTOR, MIN_ZOOM)
     end
 end

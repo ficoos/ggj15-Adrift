@@ -6,7 +6,7 @@ function love.conf(t)
     t.window.title = "Space Poop"
     t.window.fullscreen = false
     t.window.vsync = false
-    t.window.fsaa = 1
+    t.window.fsaa = 4
     t.window.width = 1280
     t.window.height = 720
     t.window.resizable = false
