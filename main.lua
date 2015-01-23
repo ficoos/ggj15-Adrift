@@ -11,7 +11,7 @@ function love.load()
 end
 
 function love.update(dt)
-    GameState:update(dt)
+    GameState.update(dt)
 end
 
 function love.draw()
