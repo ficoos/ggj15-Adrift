@@ -3,6 +3,10 @@ package.path = "lib/?.lua;lib/?/init.lua;" .. package.path -- libs
 
 local lg = love.graphics
 
+require 'strict'
+
+class_commons = nil
+common = nil
 local GameState = require 'hump.gamestate'
 local SpaceRescue = require 'states.SpaceRescue'
 
