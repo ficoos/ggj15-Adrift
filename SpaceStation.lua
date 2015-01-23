@@ -24,7 +24,7 @@ function SpaceStation:_set_up_physics()
     local world = self._world
     local x, y = unpack(self._position)
     local body = lp.newBody(world, x, y, "static")
-    local shape = lp.newCircleShape(x, y, self._radius)
+    local shape = lp.newCircleShape(0, 0, self._radius)
     local fixture = lp.newFixture(body, shape, 1)
     fixture:setUserData(self)
     self._physics = {body=body, shape=shape, fixture=fixture}
@@ -39,6 +39,7 @@ end
 
 function SpaceStation:draw()
     local x, y = self:get_position()
+    local r = self._radius
     lg.setColor(self._color)
     lg.circle("fill", x, y, self._radius)
 end

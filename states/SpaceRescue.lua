@@ -118,7 +118,7 @@ function SpaceRescue:draw()
         lg.circle("fill", y1, y2, 5,5)
 
     end
-    debugWorldDraw(self._world,0,0,lw.getWidth(),lw.getHeight())
+    debugWorldDraw(self._world,off_x - lw.getWidth() / 2,off_y - lw.getHeight() / 2,lw.getWidth(),lw.getHeight())
     self._camera:detach()
 end
 
@@ -128,13 +128,23 @@ function SpaceRescue:_spawn_asteroid()
         return
     end
     local w, h = lw.getWidth(), lw.getHeight()
-    local radius = math.sqrt(w * w + h * h) + MAX_ASTEROID_RADIUS
+    local radius = math.sqrt(w * w + h * h) + ast._radius
     local theta = math.random() * 2 * math.pi
-    ast:set_position(radius * math.cos(theta), radius * math.sin(theta))
+    ast:set_position(
+        self._camera:worldCoords(
+        radius * math.cos(theta) + lw.getWidth() / 2,
+        radius * math.sin(theta) + lw.getHeight() / 2
+    ))
     local x, y = ast:get_position()
-    ast:set_direction(util.angle_towards(
+    local dx, dy =  self._camera:worldCoords(
         math.random() * w,
-        math.random() * h,
+        math.random() * h
+    )
+    print(dx, dy, x, y)
+
+    ast:set_direction(util.angle_towards(
+        dx,
+        dy,
         x,
         y
     ))
