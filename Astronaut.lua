@@ -1,27 +1,40 @@
 local class = require 'hump.class'
+local vector = require 'hump.vector-light'
+local OrderedTable = require 'OrderedTable'
+local util = require 'util'
 
 local lg = love.graphics
 local lp = love.physics
 
-local ASTRO_DENSITY = 1
+local ASTRO_DENSITY = 0.2
 
 local Astronaut = class{}
 
-function Astronaut:init(world, color)
-    assert(world)
+function Astronaut:init(name, level, color)
+    assert(level)
+    self._name= name or util.uuid("Astronaut")
     self._color = color or {255, 255, 255, 255}
-    self._world = world
-    self._radius = 10
-    self._position = {0, 0}
+    self.level = level
+    self._world = level:getWorld()
+    self._size = 50
+    self._position = {0, 0 }
+    self._connectedTo=OrderedTable("connectedTo")
     self:_set_up_physics()
+end
+
+function Astronaut:getName()
+    return self._name
 end
 
 function Astronaut:_set_up_physics()
     local world = self._world
     local x, y = 0, 0
     local body = lp.newBody(world, x, y, "dynamic")
-    local shape = lp.newCircleShape(x, y, self._radius)
+    local shape = lp.newRectangleShape(x, y, self._size, self._size)
     local fixture = lp.newFixture(body, shape, ASTRO_DENSITY)
+    fixture:setUserData(self)
+
+    world:setCallbacks(onHitAstronaut)
     self._physics = {body=body, shape=shape, fixture=fixture}
 end
 
@@ -43,7 +56,57 @@ end
 function Astronaut:draw()
     local x, y = self:get_position()
     lg.setColor(self._color)
-    lg.circle("fill", x, y, self._radius)
+    lg.rectangle("fill", x, y, self._size,self._size)
+end
+
+function onHitAstronaut(a,b,coll)
+    local objA=a:getUserData()
+    local objB=b:getUserData()
+    if objA and objA.onCollidesWith then
+        objA.onCollidesWith(objB,coll)
+    end
+
+    if objB and objB.onCollidesWith then
+        objB.onCollidesWith(objA,coll)
+    end
+
+end
+
+function Astronaut:onCollidesWith(target,coll)
+    print("a",target)
+    if (self._connectedTo[target:getName()]==nil
+        and self.getName()=="player"
+    ) then
+        self._level:doOnNextUpdate(
+            function()
+                connectAstronauts(self,target)
+            end
+        )
+    end;
+end
+
+function connectAstronauts(objA,objB)
+    local newJoint = newRevoluteJoint(objA,objB,
+        objA._size/2,
+        objA._size/2,
+        -objB._size/2,
+        -objB._size/2)
+
+end
+
+function newRevoluteJoint(objA,objB, x1, y1, x2,y2)
+    local bodyA=objA._physics.body
+    local bodyB=objA._physics.body
+    local aX, aY = bodyA:getPosition()
+
+    print(aX+x1-x2,aY+y1-y2)
+    bodyB:setPosition(aX+x1-x2,aY+y1-y2)
+    local newJoint = lp.newRevoluteJoint(objA._physics.body,
+        objB._physics.body,
+        aX+x1, aY+y1, false )
+
+
+    return newJoint
 end
 
 return Astronaut
