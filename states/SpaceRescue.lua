@@ -1,7 +1,9 @@
 local Astronaut = require 'Astronaut'
 local Asteroid = require 'Asteroid'
 local OrderedTable = require 'OrderedTable'
+local SpaceStation = require 'SpaceStation'
 local util = require 'util'
+local Camera = require 'hump.camera'
 
 local lg = love.graphics
 local lp = love.physics
@@ -14,6 +16,7 @@ local FORCE = 25000
 local MAX_ASTEROID_RADIUS = 100
 local MIN_ASTEROID_SPEED = 50
 local MAX_ASTEROID_SPEED = 500
+local CAMERA_SPEED = 10
 
 function SpaceRescue:enter(prev, ...)
     lp.setMeter(2)
@@ -21,21 +24,29 @@ function SpaceRescue:enter(prev, ...)
     self._drawables = OrderedTable()
     self._onNextUpdate = {}
 
-    self._drawables[1]=OrderedTable("asteroids")
-    self._drawables[2]=OrderedTable("agents")
+    self._drawables[1]=OrderedTable("station")
+    self._drawables[2]=OrderedTable("asteroids")
+    self._drawables[3]=OrderedTable("agents")
+
+    self._station = SpaceStation("Station", self, 30, 30)
 
     local as1 = Astronaut("player",self,{255,255,0,255})
     local as2 = Astronaut(nil,self)
+    self._player = as1
+    self._camera = Camera(as1:get_position())
+    self._bg = lg.newImage("data/gfx/space.jpg")
+    self._bg:setWrap("repeat", "repeat")
 
     table.insert(self._drawables.agents, as1)
     table.insert(self._drawables.agents, as2)
+    table.insert(self._drawables.station, self._station)
 
     as1:set_position(lw.getWidth()/2+100, lw.getHeight()/2)
     as2:set_position(lw.getWidth()/2-100, lw.getHeight()/2)
 end
 
 function SpaceRescue:_push_player()
-    local x, y = lm.getPosition()
+    local x, y = self._camera:worldCoords(lm.getPosition())
     local ax, ay = self._drawables.agents[1]:get_position()
     local theta = util.angle_towards(ax, ay, x, y)
 
@@ -49,6 +60,7 @@ function SpaceRescue:getWorld()
 end
 
 function SpaceRescue:update(dt)
+    self._camera:lookAt(self._player:get_position())
     if (self._onNextUpdate) then
         for _, func in ipairs(self._onNextUpdate) do
             func()
@@ -62,7 +74,9 @@ function SpaceRescue:update(dt)
     end
     for _, layer in ipairs(self._drawables) do
         for _, obj in ipairs(layer) do
-            obj:update(dt)
+            if obj.update then
+                obj:update(dt)
+            end
         end
     end
 end
@@ -72,6 +86,15 @@ function SpaceRescue:doOnNextUpdate(func)
 end
 
 function SpaceRescue:draw()
+    local off_x, off_y = self._camera:pos()
+    local quad = lg.newQuad(
+        off_x, off_y,
+        lg.getWidth(), lg.getHeight(),
+        self._bg:getWidth(), self._bg:getHeight()
+    )
+    lg.setColor(255, 255, 255, 255)
+    lg.draw(self._bg, quad)
+    self._camera:attach()
     for _, layer in ipairs(self._drawables) do
         for _, obj in ipairs(layer) do
             lg.push()
@@ -79,6 +102,7 @@ function SpaceRescue:draw()
             lg.pop()
         end
     end
+    self._camera:detach()
 end
 
 function SpaceRescue:_spawn_asteroid()
