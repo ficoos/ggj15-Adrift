@@ -17,17 +17,16 @@ function SpaceRescue:enter(prev, ...)
 
 
     self._drawables[1]=OrderedTable("agents")
-    print(self._drawables[1],"aa")
 
---    local as1 = Astronaut(self._world)
---    local as2 = Astronaut(self._world)
---
---    table.insert(self._drawables.agents, as1)
---    table.insert(self._drawables.agents, as2)
---
---
---    as1:set_position(lw.getWidth()/2+100, lw.getHeight()/2)
---    as2:set_position(lw.getWidth()/2-100, lw.getHeight()/2)
+    local as1 = Astronaut(self._world)
+    local as2 = Astronaut(self._world)
+
+    table.insert(self._drawables.agents, as1)
+    table.insert(self._drawables.agents, as2)
+
+
+    as1:set_position(lw.getWidth()/2+100, lw.getHeight()/2)
+    as2:set_position(lw.getWidth()/2-100, lw.getHeight()/2)
 end
 
 function SpaceRescue:_push_player()

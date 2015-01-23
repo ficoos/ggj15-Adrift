@@ -1,12 +1,10 @@
 local class = require 'hump.class'
+local util = require 'util'
 
 local _keyName= {};
 
-local OrderedTable= class{
+local OrderedTable = {
     __index = function(t, name)
-        if type(name)=="number" then
-            return t[name]
-        end
         for i, obj in ipairs(t) do
             if obj:getName() == name then
                 return obj
@@ -15,14 +13,16 @@ local OrderedTable= class{
     end,
 }
 
-function OrderedTable:init(name)
-    self[_keyName]=name
+function OrderedTable_new(name)
+    local self = {
+        getName = function (self)
+            return self[_keyName]
+        end,
+    }
+    self[_keyName] = name or util.uuid("OrderedTable")
+    self = setmetatable(self, OrderedTable)
+    return self
 end
 
-function OrderedTable:getName()
-    return self[_keyName]
-end
-
-
-return OrderedTable
+return OrderedTable_new
 
