@@ -2,6 +2,7 @@ local class = require 'hump.class'
 local vector = require 'hump.vector-light'
 local OrderedTable = require 'OrderedTable'
 local util = require 'util'
+local Event = require 'Event'
 
 local lg = love.graphics
 local lp = love.physics
@@ -22,6 +23,7 @@ function Astronaut:init(name, level, color)
     self._connectedTo=OrderedTable("connectedTo")
     self._lastInChain = self
     self:_set_up_physics()
+    self.onDestroy = Event()
 end
 
 function Astronaut:getName()
@@ -93,6 +95,8 @@ function Astronaut:onCollidesWith(target,coll)
                 self._lastInChain=target
             end
         )
+    elseif target._type=="Star" then
+        self.onDestroy:emit(self)
     end;
 end
 

@@ -58,6 +58,9 @@ function SpaceRescue:enter(prev, ...)
             math.random(SPAWN_RECT[3], SPAWN_RECT[4])
         )
         table.insert(self._drawables.agents, as)
+        as.onDestroy(function()
+            self._drawables.agents:remove(as)
+        end)
     end
     self._player = as1
     self._camera = Camera(as1:get_position())
