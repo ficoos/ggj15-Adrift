@@ -220,6 +220,7 @@ function SpaceRescue:update(dt)
     if self.floating_friends > 0 then
         if math.random() < dt * FRIEND_COMPLAIN_RAITE then
             playOneOf(FRIEND_SPEECH)
+            self._drawables.agents[math.random(2, #self._drawables.agents)]:talk()
         end
     end
     if math.random() < (dt * ASTEROID_SPAW_RATE_SEC) then

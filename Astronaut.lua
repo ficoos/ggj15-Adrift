@@ -23,6 +23,7 @@ local RESCUE_SPEECH = {
 
 local Astronaut = class{}
 local img = lg.newImage("data/gfx/astronaut.png")
+local bubble = lg.newImage("data/gfx/talking.png")
 
 function Astronaut:init(name, level, color)
     assert(level)
@@ -40,6 +41,7 @@ function Astronaut:init(name, level, color)
     self.isDead = false
     self:_set_up_physics()
     self.onDestroy = Event()
+    self._isSpeaking = false
     self:_setUpThruser()
 end
 
@@ -55,6 +57,13 @@ function Astronaut:_setUpThruser()
 
     self._air_part = psystem
     self:thrust()
+end
+
+function Astronaut:talk()
+    self._isSpeaking = true
+    self._timer.add(1, function()
+        self._isSpeaking = false
+    end)
 end
 
 function Astronaut:getName()
@@ -143,7 +152,10 @@ function Astronaut:draw()
         lg.setColor(255, 230, 160)
     end
     lg.draw(img, -(self._width * factor) /2, -(self._height * factor)/2, 0, 1/scale)
-    lg.setColor(255, 0, 0)
+    lg.setColor(255, 255, 255)
+    if self._isSpeaking then
+        lg.draw(bubble, -self._width / 2, -self._height - 20)
+    end
     lg.pop()
     --local lhx, lhy = self:getHandPosition("left")
     --local rhx, rhy = self:getHandPosition("right")
