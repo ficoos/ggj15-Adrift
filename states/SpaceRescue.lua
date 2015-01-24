@@ -325,14 +325,15 @@ function SpaceRescue:draw()
     end
     self._camera:detach()
     lg.setColor(255, 255, 255, 255)
-    local oxx = (lw.getWidth() - ox_full:getWidth() * 0.25) * 0.5
-    lg.draw(ox_empty, oxx, 10, 0, 0.25)
+    local oxscale = 0.4
+    local oxx = (lw.getWidth() - ox_full:getWidth() * oxscale) * 0.5
+    lg.draw(ox_empty, oxx, 10, 0, oxscale)
     local quad = lg.newQuad(
         0, 0,
         ox_full:getWidth() * self._air, ox_full:getHeight(),
         ox_full:getWidth(), ox_full:getHeight()
     )
-    lg.draw(ox_full, quad, oxx, 10, 0, 0.25)
+    lg.draw(ox_full, quad, oxx, 10, 0, oxscale)
 
     lg.setColor(255, 255, 0, 255)
     --lg.print("Floating Friends: " .. self.floating_friends, 10, 10)
