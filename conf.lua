@@ -3,7 +3,7 @@ function love.conf(t)
     t.identity = "spoop"
     t.version = "0.9.1"
 
-    t.window.title = "Space Poop"
+    t.window.title = "Adrift"
     t.window.fullscreen = false
     t.window.vsync = false
     t.window.fsaa = 4

@@ -3,6 +3,7 @@ local util = require 'util'
 
 local lg = love.graphics
 local lp = love.physics
+local img = lg.newImage("data/gfx/spaceship.png")
 
 local SpaceStation = class{}
 
@@ -12,7 +13,7 @@ function SpaceStation:init(name, level, x, y)
     self._name = name or util.uuid("SpaceStation")
     self._color = {100, 100, 255, 255}
     self._world = level:getWorld()
-    self._radius = 100
+    self._radius = 150
     self._position = {x, y}
     self:_set_up_physics()
 end
@@ -41,8 +42,10 @@ end
 function SpaceStation:draw()
     local x, y = self:get_position()
     local r = self._radius
-    lg.setColor(self._color)
-    lg.circle("fill", x, y, self._radius)
+    --lg.setColor(self._color)
+    --lg.circle("fill", x, y, self._radius)
+    lg.setColor(255, 255, 255, 255)
+    lg.draw(img,x - 145, y - r)
 end
 
 
