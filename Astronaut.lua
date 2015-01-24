@@ -240,6 +240,7 @@ function Astronaut:onCollidesWith(target,coll)
             local station_pos = {self._level._station:get_position()}
             self._timer.tween(1, ast, {_lastPosition=station_pos}, "linear", function()
                 self._level.rescued_friends = self._level.rescued_friends + 1
+                self._level:notify("You rescued " .. self._level.rescued_friends .. " friends!")
                 ast:destroy()
             end)
         end)

@@ -4,12 +4,14 @@ local Event = require 'Event'
 
 local lg = love.graphics
 local lp = love.physics
+local la = love.audio
 
 local Asteroid = class{}
 
 local DENSITY = 1
 
 local asteroid2 = lg.newImage("data/gfx/asteroid2.png")
+local thud = la.newSource("data/sounds/asteroid_hit.ogg")
 
 function Asteroid:init(world, radius, name)
     assert(world)
@@ -59,6 +61,8 @@ end
 function Asteroid:onCollidesWith(other, coll)
     if other._type == "Star" then
         self:destroy()
+    else
+        thud:clone():play()
     end
 end
 

@@ -6,6 +6,7 @@ local Star = require 'Star'
 local util = require 'util'
 local Camera = require 'hump.camera'
 local debugWorldDraw = require 'debugWorldDraw'
+local Timer = require 'hump.timer'
 
 local lg = love.graphics
 local lp = love.physics
@@ -34,6 +35,8 @@ local ASTEROID_SPAW_RATE_SEC = 1
 local AVAILABLE_AIR_MINUTES = 3
 local BREATHING_DEPLETION_SEC = 1 / (60 * AVAILABLE_AIR_MINUTES)
 local PUSH_DEPLETION_SEC = 0 -- 0.05
+
+local NOTIFY_FONT = lg.newFont(32)
 
 local show_phys_debug = false
 local show_spawn_rect = false
@@ -66,6 +69,9 @@ end
 
 function SpaceRescue:enter(prev, ...)
     lp.setMeter(2)
+    self._timer = Timer.new()
+    self._message = ""
+    self._opacity = 0
     self._world = lp.newWorld(0, 0, true)
     self._drawables = OrderedTable()
     self._onNextUpdate = {}
@@ -116,6 +122,7 @@ function SpaceRescue:enter(prev, ...)
     self._end_message = nil
     self._game_over = false
     lg.setBackgroundColor(1, 0, 32)
+    self:notify("Save your friends!")
 end
 
 function SpaceRescue:onGameOver()
@@ -161,6 +168,7 @@ function SpaceRescue:getWorld()
 end
 
 function SpaceRescue:update(dt)
+    self._timer.update(dt)
     if not self._player.isDead then
         self._air = self._air - BREATHING_DEPLETION_SEC * dt
         if self._air <= 0 then
@@ -280,6 +288,24 @@ function SpaceRescue:draw()
         lg.printf(self._end_message, 0, (lw.getHeight() - lg.getFont():getHeight()) / 2, lw:getWidth(), "center")
     end
 
+    lg.setColor(255, 255, 255, self._opacity)
+    local fnt = lg.getFont()
+    lg.setFont(NOTIFY_FONT)
+    lg.printf(self._message, 0, (lw.getHeight() - lg.getFont():getHeight()) - 80, lw:getWidth(), "center")
+    lg.setFont(fnt)
+
+end
+
+function SpaceRescue:notify(msg)
+    self._message = msg
+    self._opacity = 0
+    self._timer.clear()
+    self._timer.tween(0.5, self, {_opacity=255}, "linear", function()
+        self._timer.add(2, function()
+            self._timer.tween(0.5, self, {_opacity=0}, "linear", function()
+            end)
+        end)
+    end)
 end
 
 function SpaceRescue:_spawn_asteroid()
@@ -320,6 +346,8 @@ end
 function SpaceRescue:keypressed(key)
     if key == "a" then
         self:_spawn_asteroid()
+    elseif key == "n" then
+        self:notify("Hello World")
     elseif key == "f1" then
         show_phys_debug = not show_phys_debug
     elseif key == "f2" then
