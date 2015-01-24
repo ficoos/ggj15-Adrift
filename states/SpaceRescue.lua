@@ -29,6 +29,7 @@ local MAX_ZOOM = 2
 local ZOOM_SPEED = .005
 local ASTRO_FRIENDS_NUM = 20
 local ASTRO_STILL_NUM = 20
+local FRIEND_COMPLAIN_RAITE = 1/10
 
 local ASTEROID_SPAW_RATE_SEC = 1
 
@@ -55,6 +56,21 @@ local PLAYER_SPEECH = {
     la.newSource("data/sounds/comingrightover.ogg"),
     la.newSource("data/sounds/no_problem.ogg"),
     la.newSource("data/sounds/onmyway.ogg"),
+    la.newSource("data/sounds/calmdown.ogg"),
+    la.newSource("data/sounds/holdyourhurses.ogg"),
+    la.newSource("data/sounds/onesmallstep.ogg"),
+    la.newSource("data/sounds/rogetthat.ogg"),
+}
+
+local FRIEND_SPEECH = {
+ la.newSource("data/sounds/astro2/Cookin.ogg"),
+ la.newSource("data/sounds/astro2/Guys.ogg"),
+ la.newSource("data/sounds/astro2/Hand.ogg"),
+ la.newSource("data/sounds/astro2/Here.ogg"),
+ la.newSource("data/sounds/astro2/Hot.ogg"),
+ la.newSource("data/sounds/astro2/House.ogg"),
+ la.newSource("data/sounds/astro2/Old.ogg"),
+ la.newSource("data/sounds/astro2/Space.ogg"),
 }
 
 local FRIEND_NAMES = {
@@ -107,7 +123,7 @@ function SpaceRescue:enter(prev, ...)
         table.insert(self._drawables.agents, as)
         as.onDestroy(function()
             self._drawables.agents:remove(as)
-            if as.isDead then
+            if not as._rescued then
                 self:notify(FRIEND_NAMES[math.random(1, #FRIEND_NAMES)] .. " has died a horrible death")
             end
             self.floating_friends = self.floating_friends - 1
@@ -182,6 +198,11 @@ function SpaceRescue:update(dt)
             self._air = 0
             self._player.isDead = true
             self:onGameOver()
+        end
+    end
+    if self.floating_friends > 0 then
+        if math.random() < dt * FRIEND_COMPLAIN_RAITE then
+            playOneOf(FRIEND_SPEECH)
         end
     end
     if math.random() < (dt * ASTEROID_SPAW_RATE_SEC) then
@@ -295,9 +316,14 @@ function SpaceRescue:draw()
         lg.printf(self._end_message, 0, (lw.getHeight() - lg.getFont():getHeight()) / 2, lw:getWidth(), "center")
     end
 
-    lg.setColor(255, 255, 255, self._opacity)
     local fnt = lg.getFont()
     lg.setFont(NOTIFY_FONT)
+    lg.setColor(0, 0, 0, self._opacity)
+    lg.printf(self._message, 2, (lw.getHeight() - lg.getFont():getHeight()) - 78, lw:getWidth(), "center")
+    lg.printf(self._message, 2, (lw.getHeight() - lg.getFont():getHeight()) - 82, lw:getWidth(), "center")
+    lg.printf(self._message, -2, (lw.getHeight() - lg.getFont():getHeight()) - 78, lw:getWidth(), "center")
+    lg.printf(self._message, -2, (lw.getHeight() - lg.getFont():getHeight()) - 82, lw:getWidth(), "center")
+    lg.setColor(255, 255, 255, self._opacity)
     lg.printf(self._message, 0, (lw.getHeight() - lg.getFont():getHeight()) - 80, lw:getWidth(), "center")
     lg.setFont(fnt)
 

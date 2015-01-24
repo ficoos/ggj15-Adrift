@@ -8,6 +8,8 @@ local Star = class{}
 
 local G = 6.6726 * 100000
 
+local img = lg.newImage("data/gfx/sun.jpg")
+
 function Star:init(name, level, x, y, radius, mass)
     self._type = "Star"
     assert(level)
@@ -48,7 +50,11 @@ function Star:draw()
     local x, y = self:get_position()
     local r = self._radius
     lg.setColor(self._color)
-    lg.circle("fill", x, y, self._radius)
+    --lg.circle("fill", x, y, self._radius)
+    local scale = img:getWidth() / r
+    lg.setBlendMode("additive")
+    lg.draw(img, x - r, y - r, 0 , 2/scale)
+    lg.setBlendMode("alpha")
 end
 
 function Star:attract(b)

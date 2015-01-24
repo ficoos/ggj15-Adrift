@@ -4,7 +4,7 @@ local rng = love.math.newRandomGenerator(seed)
 local function drawFixture(fixture)
 	local shape = fixture:getShape()
 	local shapeType = shape:getType()
-	
+
 	if (fixture:isSensor()) then
 		love.graphics.setColor(0,0,255,96)
 	else
@@ -40,13 +40,13 @@ end
 local function drawBody(body)
 	local bx,by = body:getPosition()
 	local bodyAngle = body:getAngle()
-	
+
 	love.graphics.push()
 	love.graphics.translate(bx,by)
 	love.graphics.rotate(bodyAngle)
-	
+
 	rng:setSeed(seed)
-	
+
 	local fixtures = body:getFixtureList()
 	for i=1,#fixtures do
 		drawFixture(fixtures[i])
@@ -62,13 +62,13 @@ end
 
 local function debugWorldDraw(world,topLeft_x,topLeft_y,width,height)
 	world:queryBoundingBox(topLeft_x,topLeft_y,topLeft_x+width,topLeft_y+height,debugWorldDraw_scissor_callback)
-	
+
 	love.graphics.setLineWidth(1)
 	for body in pairs(drawnBodies) do
 		drawnBodies[body] = nil
 		drawBody(body)
 	end
-	
+
 	love.graphics.setColor(0,255,0,255)
 	love.graphics.setLineWidth(3)
 	love.graphics.setPointSize(3)
@@ -86,7 +86,7 @@ local function debugWorldDraw(world,topLeft_x,topLeft_y,width,height)
 			end
 		end
 	end
-	
+
 	love.graphics.setColor(255,0,0,255)
 	love.graphics.setPointSize(3)
 	local contacts = world:getContactList()

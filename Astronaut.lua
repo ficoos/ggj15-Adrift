@@ -237,6 +237,7 @@ function Astronaut:onCollidesWith(target,coll)
             ast._lastPosition = {ast:get_position()}
             ast._physics.fixture:setSensor(true)
             ast.isDead = true
+            ast._rescued = true
             local station_pos = {self._level._station:get_position()}
             self._timer.tween(1, ast, {_lastPosition=station_pos}, "linear", function()
                 self._level.rescued_friends = self._level.rescued_friends + 1
