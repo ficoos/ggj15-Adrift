@@ -57,6 +57,10 @@ local PLAYER_SPEECH = {
     la.newSource("data/sounds/onmyway.ogg"),
 }
 
+local FRIEND_NAMES = {
+    "Saggi", "Opher", "Lilac", "Rosa", "Anat", "Jerry", "Emily", "Samantha",
+}
+
 function playOneOf(sndList)
     local curr = sndList["current"]
     if curr and curr:isPlaying() then
@@ -103,6 +107,9 @@ function SpaceRescue:enter(prev, ...)
         table.insert(self._drawables.agents, as)
         as.onDestroy(function()
             self._drawables.agents:remove(as)
+            if as.isDead then
+                self:notify(FRIEND_NAMES[math.random(1, #FRIEND_NAMES)] .. " has died a horrible death")
+            end
             self.floating_friends = self.floating_friends - 1
             if self.floating_friends == 0 then
                 self:onGameOver()
