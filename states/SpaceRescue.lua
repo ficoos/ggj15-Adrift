@@ -189,7 +189,7 @@ end
 
 function SpaceRescue:draw()
     local off_x, off_y = self._camera:pos()
-    local scale1 = self._camera.scale ^ 0.1
+    local scale1 = self._camera.scale ^ 0.2
     local scale2 = self._camera.scale ^ 0.03
     local quad1 = lg.newQuad(
         off_x / scale1 / 6 - (lw.getWidth() / scale1) / 2,
@@ -201,7 +201,7 @@ function SpaceRescue:draw()
     local quad2 = lg.newQuad(
         off_x / scale2 / 32 - (lw.getWidth() / scale2) / 2,
         off_y / scale2 / 32 - (lw.getHeight() / scale2) / 2,
-        lg.getWidth() / scale1, lg.getHeight() / scale2,
+        lg.getWidth() / scale2 , lg.getHeight() / scale2,
         layer2:getWidth(),
         layer2:getHeight()
     )
@@ -225,17 +225,17 @@ function SpaceRescue:draw()
     end
     local joints=self._world:getJointList();
 
-    for _, joint in ipairs(joints) do
-        local x1,x2,y1,y2=joint:getAnchors()
-        lg.setColor(100,43,43,255)
-        lg.circle("fill", x1, x2, 5,5)
-
-        lg.setColor(100,150,200,255)
-        lg.circle("fill", y1, y2, 5,5)
-
-    end
     if show_phys_debug then
         debugWorldDraw(self._world,off_x - lw.getWidth() / self._camera.scale / 2,off_y - lw.getHeight() / self._camera.scale / 2,lw.getWidth() / self._camera.scale,lw.getHeight() / self._camera.scale)
+        for _, joint in ipairs(joints) do
+            local x1,x2,y1,y2=joint:getAnchors()
+            lg.setColor(100,43,43,255)
+            lg.circle("fill", x1, x2, 5,5)
+
+            lg.setColor(100,150,200,255)
+            lg.circle("fill", y1, y2, 5,5)
+
+        end
     end
     lg.setColor(255, 0, 255, 255)
     if show_spawn_rect then

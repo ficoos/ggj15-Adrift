@@ -150,24 +150,28 @@ function Astronaut:onCollidesWith(target,coll)
         and self._lastInChain ~= self
         and self:getName()=="player"
     ) then
-        if target.isDead then
-            return
-        end
-        local ast = self:getLastInChain()
-        if ast == self then
-            return
-        end
-        ast:disconnect()
-        ast._lastPosition = {ast:get_position()}
-        ast._physics.fixture:setSensor(true)
-        ast.isDead = true
-        local station_pos = {self._level._station:get_position()}
-        self._timer.tween(1, ast, {_lastPosition=station_pos}, "linear", function()
-            self._level.rescued_friends = self._level.rescued_friends + 1
-            ast:destroy()
+        self._level:doOnNextUpdate(function()
+            if target.isDead then
+                return
+            end
+            local ast = self:getLastInChain()
+            if ast == self then
+                return
+            end
+            ast:disconnect()
+            ast._lastPosition = {ast:get_position()}
+            ast._physics.fixture:setSensor(true)
+            ast.isDead = true
+            local station_pos = {self._level._station:get_position()}
+            self._timer.tween(1, ast, {_lastPosition=station_pos}, "linear", function()
+                self._level.rescued_friends = self._level.rescued_friends + 1
+                ast:destroy()
+            end)
         end)
     elseif target._type=="Star" then
-        self:destroy()
+        self._level:doOnNextUpdate(function()
+            self:destroy()
+        end)
     end;
 end
 
