@@ -26,5 +26,5 @@ function love.conf(t)
     t.modules.thread = false
     t.modules.physics = true
 
-    t.console = true
+    t.console = false
 end

@@ -8,10 +8,10 @@ require 'strict'
 class_commons = nil
 common = nil
 local GameState = require 'hump.gamestate'
-local SpaceRescue = require 'states.SpaceRescue'
+local TitleScreen = require 'states.TitleScreen'
 
 function love.load()
-    GameState.switch(SpaceRescue)
+    GameState.switch(TitleScreen)
 end
 
 function love.update(dt)
