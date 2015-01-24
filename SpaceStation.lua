@@ -8,10 +8,11 @@ local SpaceStation = class{}
 
 function SpaceStation:init(name, level, x, y)
     assert(level)
+    self._type = "SpaceStation"
     self._name = name or util.uuid("SpaceStation")
     self._color = {100, 100, 255, 255}
     self._world = level:getWorld()
-    self._radius = 50
+    self._radius = 100
     self._position = {x, y}
     self:_set_up_physics()
 end

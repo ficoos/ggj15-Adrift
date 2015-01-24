@@ -3,6 +3,7 @@ local vector = require 'hump.vector-light'
 local OrderedTable = require 'OrderedTable'
 local util = require 'util'
 local Event = require 'Event'
+local Timer = require 'hump.timer'
 
 local lg = love.graphics
 local lp = love.physics
@@ -13,6 +14,7 @@ local Astronaut = class{}
 
 function Astronaut:init(name, level, color)
     assert(level)
+    self._timer = Timer.new()
     self._type="astronaut"
     self._name = name or util.uuid("Astronaut")
     self._color = color or {255, 255, 255, 255}
@@ -20,8 +22,10 @@ function Astronaut:init(name, level, color)
     self._world = level:getWorld()
     self._size = 50
     self._position = {0, 0 }
-    self._connectedTo=OrderedTable("connectedTo")
+    self._connectedTo = nil
+    self._connectedFrom = nil
     self._lastInChain = self
+    self.isDead = false
     self:_set_up_physics()
     self.onDestroy = Event()
 end
@@ -37,7 +41,6 @@ function Astronaut:_set_up_physics()
     local shape = lp.newRectangleShape(x, y, self._size, self._size)
     local fixture = lp.newFixture(body, shape, ASTRO_DENSITY)
     fixture:setUserData(self)
---    fixture:setSensor(true)
 
     world:setCallbacks(onHitAstronaut)
     self._physics = {body=body, shape=shape, fixture=fixture}
@@ -48,9 +51,14 @@ function Astronaut:apply_force(ix, iy)
 end
 
 function Astronaut:update(dt)
+    self._timer.update(dt)
 end
 
 function Astronaut:get_position()
+    if self._lastPosition then
+        local x, y = unpack(self._lastPosition)
+        return x, y
+    end
     return self._physics.body:getPosition()
 end
 
@@ -83,30 +91,90 @@ function onHitAstronaut(a,b,coll)
 
 end
 
+function Astronaut:destroy(target,coll)
+    self.isDead = true
+    self._connectedTo = nil
+    self.onDestroy:emit(self)
+    self._lastPosition = self:get_position()
+    if self._connectedFrom then
+        self._connectedFrom._connectedTo = nil
+    end
+    self._physics.body:destroy()
+end
+
+function Astronaut:isInChain(target)
+    local ast = self
+    while ast._connectedTo ~= nil do
+        if ast._connectedTo == target then
+            return true
+        else
+            ast = ast._connectedTo
+        end
+    end
+    return false
+end
+
+function Astronaut:getLastInChain()
+    local ast = self
+    while ast._connectedTo ~= nil do
+        ast = ast._connectedTo
+    end
+    return ast
+end
+
+function Astronaut:disconnect()
+    self._connectedFrom._connectedTo = nil
+    self._connectedFrom = nil
+    self._joint:destroy()
+end
+
 function Astronaut:onCollidesWith(target,coll)
-    if (target._type=="astronaut" and
-        self._connectedTo[target:getName()]==nil
+    if (target._type=="astronaut"
         and self:getName()=="player"
+        and not self:isInChain(target)
     ) then
-        self._connectedTo[target:getName()]=true
         self._level:doOnNextUpdate(
             function()
-                connectAstronauts(self._lastInChain,target)
+                connectAstronauts(self:getLastInChain(), target)
                 self._lastInChain=target
             end
         )
+    elseif (
+        target._type=="SpaceStation"
+        and self._lastInChain ~= self
+        and self:getName()=="player"
+    ) then
+        if target.isDead then
+            return
+        end
+        local ast = self:getLastInChain()
+        if ast == self then
+            return
+        end
+        ast:disconnect()
+        ast._lastPosition = {ast:get_position()}
+        ast._physics.fixture:setSensor(true)
+        ast.isDead = true
+        local station_pos = {self._level._station:get_position()}
+        self._timer.tween(1, ast, {_lastPosition=station_pos}, "linear", function()
+            self._level.rescued_friends = self._level.rescued_friends + 1
+            ast:destroy()
+        end)
     elseif target._type=="Star" then
-        self.onDestroy:emit(self)
+        self:destroy()
     end;
 end
 
 --connect B to A
 function connectAstronauts(objA,objB)
+    objA._connectedTo = objB
+    objB._connectedFrom = objA
     local newJoint = newRevoluteJoint(objA,objB,
         objA._size/2,
         objA._size/2,
         -objB._size/2,
         -objB._size/2)
+    objB._joint = newJoint
 
 end
 

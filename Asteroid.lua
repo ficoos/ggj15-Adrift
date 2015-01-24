@@ -48,9 +48,14 @@ end
 function Asteroid:update(dt)
 end
 
+function Asteroid:destroy()
+    self._physics.body:destroy()
+    self.onDestroy:emit(self)
+end
+
 function Asteroid:onCollidesWith(other, coll)
     if other._type == "Star" then
-        self.onDestroy:emit(self)
+        self:destroy()
     end
 end
 

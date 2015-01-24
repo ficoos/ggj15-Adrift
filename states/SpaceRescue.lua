@@ -14,7 +14,7 @@ local lw = love.window
 
 local SpaceRescue = {}
 
-local FORCE = 25000
+local FORCE = 25000000
 local MAX_ASTEROID_RADIUS = 100
 local MIN_ASTEROID_SPEED = 50
 local MAX_ASTEROID_SPEED = 500
@@ -22,10 +22,16 @@ local CAMERA_SPEED = 10
 local SUN_MASS = 5.97219 * 1000000
 
 local ZOOM_FACTOR = 1.2
-local MIN_ZOOM = 0.2
+local MIN_ZOOM = 0.1
 local MAX_ZOOM = 2
 local ZOOM_SPEED = .005
-local ASTRO_FRIENDS_NUM = 10
+local ASTRO_FRIENDS_NUM = 2
+
+local ASTEROID_SPAW_RATE_SEC = 1
+
+local AVAILABLE_AIR_MINUTES = 10
+local BREATHING_DEPLETION_SEC = 1 / (60 * AVAILABLE_AIR_MINUTES)
+local PUSH_DEPLETION_SEC = 0.01
 
 local show_phys_debug = false
 local show_spawn_rect = false
@@ -39,6 +45,8 @@ function SpaceRescue:enter(prev, ...)
     self._world = lp.newWorld(0, 0, true)
     self._drawables = OrderedTable()
     self._onNextUpdate = {}
+    self.floating_friends = ASTRO_FRIENDS_NUM
+    self.rescued_friends = 0
 
     self._drawables[1]=OrderedTable("sun")
     self._drawables[2]=OrderedTable("station")
@@ -46,11 +54,16 @@ function SpaceRescue:enter(prev, ...)
     self._drawables[4]=OrderedTable("agents")
 
     self._station = SpaceStation("Station", self, 30, 30)
-    self._sun = Star("sun", self, 5000, -100, 2000, SUN_MASS)
+    self._sun = Star("sun", self, 15000, -100, 10000, SUN_MASS)
     self._drawables.sun[1] = self._sun
+    self._air = 1
 
     local as1 = Astronaut("player",self,{255,255,0,255})
     table.insert(self._drawables.agents, as1)
+    as1.onDestroy(function()
+        self._drawables.agents:remove(as1)
+        self:onGameOver()
+    end)
     for i=1,ASTRO_FRIENDS_NUM do
         local as = Astronaut(nil,self)
         as:set_position(
@@ -60,6 +73,10 @@ function SpaceRescue:enter(prev, ...)
         table.insert(self._drawables.agents, as)
         as.onDestroy(function()
             self._drawables.agents:remove(as)
+            self.floating_friends = self.floating_friends - 1
+            if self.floating_friends == 0 then
+                self:onGameOver()
+            end
         end)
     end
     self._player = as1
@@ -73,15 +90,42 @@ function SpaceRescue:enter(prev, ...)
 
     as1:set_position(lw.getWidth()/2+100, lw.getHeight()/2)
     as1:set_angle(0.3)
+
+    self._end_message = nil
+    self._game_over = false
 end
 
-function SpaceRescue:_push_player()
+function SpaceRescue:onGameOver()
+    if self._game_over then
+        return
+    end
+    self._game_over = true
+    if self._player.isDead then
+        if self.rescued_friends == 0 then
+            self._end_message = "You and all your friends are dead"
+        else
+            self._end_message = "You died, but at least some survived"
+        end
+    else
+        if self.rescued_friends == ASTRO_FRIENDS_NUM then
+            self._end_message = "A winner is you"
+        else
+            self._end_message = "You failed to rescue " .. (ASTRO_FRIENDS_NUM - self.rescued_friends) .. " friends"
+        end
+    end
+end
+
+function SpaceRescue:_push_player(dt)
+    if self._player.isDead then
+        return
+    end
     local x, y = self._camera:worldCoords(lm.getPosition())
     local ax, ay = self._drawables.agents[1]:get_position()
     local theta = util.angle_towards(ax, ay, x, y)
 
-    local ix = -math.cos(theta) * FORCE
-    local iy = -math.sin(theta) * FORCE
+    self._air = self._air - dt * PUSH_DEPLETION_SEC
+    local ix = -math.cos(theta) * FORCE * dt
+    local iy = -math.sin(theta) * FORCE * dt
     self._drawables.agents[1]:apply_force(ix, iy)
 end
 
@@ -90,6 +134,16 @@ function SpaceRescue:getWorld()
 end
 
 function SpaceRescue:update(dt)
+    self._air = self._air - BREATHING_DEPLETION_SEC * dt
+    if self._air <= 0 then
+        self._air = 0
+        self._player.isDead = true
+        self:onGameOver()
+    end
+    if math.random() < (dt * ASTEROID_SPAW_RATE_SEC) then
+        print("SPAWN ASTEROID")
+        self:_spawn_asteroid()
+    end
     for _, astro in ipairs(self._drawables.agents) do
         self._sun:attract(astro._physics.body)
     end
@@ -101,7 +155,9 @@ function SpaceRescue:update(dt)
     elseif self._camera.scale > self._zoom then
         self._camera.scale = math.max(self._camera.scale - ZOOM_SPEED, self._zoom)
     end
-    self._camera:lookAt(self._player:get_position())
+    if not self._player.isDead then
+        self._camera:lookAt(self._player:get_position())
+    end
     if (self._onNextUpdate) then
         for _, func in ipairs(self._onNextUpdate) do
             func()
@@ -111,7 +167,7 @@ function SpaceRescue:update(dt)
     self._world:update(dt)
 
     if lm.isDown("l") then
-        self:_push_player()
+        self:_push_player(dt)
     end
     for _, layer in ipairs(self._drawables) do
         for _, obj in ipairs(layer) do
@@ -128,16 +184,16 @@ end
 
 function SpaceRescue:draw()
     local off_x, off_y = self._camera:pos()
-    local scale = self._camera.scale
+    local scale = self._camera.scale ^ 0.1
     local quad = lg.newQuad(
-        off_x - (lw.getWidth() / scale) / 2,
-        off_y - (lw.getHeight() / scale) / 2,
-        lg.getWidth() / self._camera.scale, lg.getHeight() / self._camera.scale,
+        off_x / scale / 8 - (lw.getWidth() / scale) / 2,
+        off_y / scale / 8 - (lw.getHeight() / scale) / 2,
+        lg.getWidth() / scale, lg.getHeight() / scale,
         self._bg:getWidth(),
         self._bg:getHeight()
     )
     lg.setColor(255, 255, 255, 255)
-    lg.draw(self._bg, quad, 0, 0, 0, self._camera.scale)
+    lg.draw(self._bg, quad, 0, 0, 0, scale)
     self._camera:attach()
     for _, layer in ipairs(self._drawables) do
         for _, obj in ipairs(layer) do
@@ -165,6 +221,15 @@ function SpaceRescue:draw()
         lg.rectangle("line", SPAWN_RECT[1], SPAWN_RECT[3], SPAWN_RECT[2] - SPAWN_RECT[1], SPAWN_RECT[4] - SPAWN_RECT[3])
     end
     self._camera:detach()
+    lg.setColor(255, 255, 0, 255)
+    lg.print("Floating Friends: " .. self.floating_friends, 10, 10)
+    lg.print("Dead Friends: " .. (ASTRO_FRIENDS_NUM - self.floating_friends - self.rescued_friends), 10, 24)
+    lg.print("Rescued Friends: " .. (self.rescued_friends), 10, 38)
+    lg.print(string.format("Air: %.2f", (self._air * 100)), 10, 52)
+    if self._game_over then
+        lg.setColor(255, 255, 255, 255)
+        lg.printf(self._end_message, 0, (lw.getHeight() - lg.getFont():getHeight()) / 2, lw:getWidth(), "center")
+    end
 end
 
 function SpaceRescue:_spawn_asteroid()
@@ -189,14 +254,13 @@ function SpaceRescue:_spawn_asteroid()
         w / 2,
         h / 2
     )
-    print(dx, dy, x, y)
 
     ast:set_direction(util.angle_towards(
         dx,
         dy,
         x,
         y
-    ))
+    ) + math.random(-math.pi/4, math.pi/4))
     ast:set_speed(math.random(MIN_ASTEROID_SPEED, MAX_ASTEROID_SPEED))
     ast:activate()
 
