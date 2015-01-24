@@ -48,7 +48,7 @@ end
 
 function Star:draw()
     local x, y = self:get_position()
-    local r = self._radius
+    local r = self._radius * 1.25
     lg.setColor(self._color)
     --lg.circle("fill", x, y, self._radius)
     local scale = img:getWidth() / r

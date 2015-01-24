@@ -99,10 +99,10 @@ function SpaceRescue:enter(prev, ...)
     self.floating_friends = ASTRO_FRIENDS_NUM
     self.rescued_friends = 0
 
-    self._drawables[1]=OrderedTable("sun")
-    self._drawables[2]=OrderedTable("station")
-    self._drawables[3]=OrderedTable("asteroids")
-    self._drawables[4]=OrderedTable("agents")
+    self._drawables[1]=OrderedTable("station")
+    self._drawables[2]=OrderedTable("asteroids")
+    self._drawables[3]=OrderedTable("agents")
+    self._drawables[4]=OrderedTable("sun")
 
     self._station = SpaceStation("Station", self, 30, 30)
     self._sun = Star("sun", self, 15000, -100, 10000, SUN_MASS)
@@ -313,11 +313,6 @@ function SpaceRescue:draw()
     lg.print("Dead Friends: " .. (ASTRO_FRIENDS_NUM - self.floating_friends - self.rescued_friends), 10, 24)
     lg.print("Rescued Friends: " .. (self.rescued_friends), 10, 38)
     lg.print(string.format("Air: %.2f", (self._air * 100)), 10, 52)
-    if self._game_over then
-        lg.setColor(255, 255, 255, 255)
-        lg.printf(self._end_message, 0, (lw.getHeight() - lg.getFont():getHeight()) / 2, lw:getWidth(), "center")
-    end
-
     local fnt = lg.getFont()
     lg.setFont(NOTIFY_FONT)
     lg.setColor(0, 0, 0, self._opacity)
@@ -327,6 +322,12 @@ function SpaceRescue:draw()
     lg.printf(self._message, -2, (lw.getHeight() - lg.getFont():getHeight()) - 82, lw:getWidth(), "center")
     lg.setColor(255, 255, 255, self._opacity)
     lg.printf(self._message, 0, (lw.getHeight() - lg.getFont():getHeight()) - 80, lw:getWidth(), "center")
+
+    if self._game_over then
+        lg.setColor(255, 255, 255, 255)
+        lg.printf(self._end_message, 0, (lw.getHeight() - lg.getFont():getHeight()) / 2, lw:getWidth(), "center")
+    end
+
     lg.setFont(fnt)
 
 end
