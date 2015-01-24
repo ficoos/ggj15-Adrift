@@ -32,6 +32,8 @@ local function drawFixture(fixture)
 	elseif (shapeType == "chain") then
 		love.graphics.setColor(0,0,0,255)
 		love.graphics.line(shape:getPoints())
+        else
+            print(shapeType)
 	end
 end
 

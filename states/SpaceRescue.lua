@@ -11,6 +11,7 @@ local lg = love.graphics
 local lp = love.physics
 local lm = love.mouse
 local lw = love.window
+local ls = love.sound
 
 local SpaceRescue = {}
 
@@ -25,13 +26,13 @@ local ZOOM_FACTOR = 1.2
 local MIN_ZOOM = 0.1
 local MAX_ZOOM = 2
 local ZOOM_SPEED = .005
-local ASTRO_FRIENDS_NUM = 2
+local ASTRO_FRIENDS_NUM = 20
 
 local ASTEROID_SPAW_RATE_SEC = 1
 
-local AVAILABLE_AIR_MINUTES = 10
+local AVAILABLE_AIR_MINUTES = 3
 local BREATHING_DEPLETION_SEC = 1 / (60 * AVAILABLE_AIR_MINUTES)
-local PUSH_DEPLETION_SEC = 0.01
+local PUSH_DEPLETION_SEC = 0 -- 0.05
 
 local show_phys_debug = false
 local show_spawn_rect = false
@@ -45,6 +46,11 @@ layer1:setWrap("repeat", "repeat")
 local layer2 = lg.newImage("data/gfx/layer2.png")
 layer2:setWrap("repeat", "repeat")
 local layer3 = lg.newImage("data/gfx/layer3.jpg")
+
+function playOneOf(sndList)
+    local snd = sndList[math.random(1, #sndList)]:clone()
+    snd:play()
+end
 
 function SpaceRescue:enter(prev, ...)
     lp.setMeter(2)
@@ -143,14 +149,15 @@ function SpaceRescue:getWorld()
 end
 
 function SpaceRescue:update(dt)
-    self._air = self._air - BREATHING_DEPLETION_SEC * dt
-    if self._air <= 0 then
-        self._air = 0
-        self._player.isDead = true
-        self:onGameOver()
+    if not self._player.isDead then
+        self._air = self._air - BREATHING_DEPLETION_SEC * dt
+        if self._air <= 0 then
+            self._air = 0
+            self._player.isDead = true
+            self:onGameOver()
+        end
     end
     if math.random() < (dt * ASTEROID_SPAW_RATE_SEC) then
-        print("SPAWN ASTEROID")
         self:_spawn_asteroid()
     end
     for _, astro in ipairs(self._drawables.agents) do
@@ -292,8 +299,8 @@ function SpaceRescue:_spawn_asteroid()
         x,
         y
     ) + math.random(-math.pi/4, math.pi/4))
-    ast:set_speed(math.random(MIN_ASTEROID_SPEED, MAX_ASTEROID_SPEED))
     ast:activate()
+    ast:set_speed(math.random(MIN_ASTEROID_SPEED, MAX_ASTEROID_SPEED))
 
     table.insert(self._drawables.asteroids, ast)
 end
@@ -312,7 +319,9 @@ function SpaceRescue:keyreleased(key)
 end
 
 function SpaceRescue:mousepressed(x, y, button)
-    if button == "wu" then
+    if button == "r" then
+        self._zoom = MIN_ZOOM
+    elseif button == "wu" then
         self._zoom = math.min(self._zoom * ZOOM_FACTOR, MAX_ZOOM)
     elseif button == "wd" then
         self._zoom = math.max(self._zoom / ZOOM_FACTOR, MIN_ZOOM)
@@ -320,6 +329,9 @@ function SpaceRescue:mousepressed(x, y, button)
 end
 
 function SpaceRescue:mousereleased(x, y, button)
+    if button == "r" then
+        self._zoom = 1
+    end
 end
 
 return SpaceRescue
