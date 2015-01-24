@@ -60,6 +60,7 @@ local PLAYER_SPEECH = {
     la.newSource("data/sounds/holdyourhurses.ogg"),
     la.newSource("data/sounds/onesmallstep.ogg"),
     la.newSource("data/sounds/rogetthat.ogg"),
+    la.newSource("data/sounds/houston.ogg"),
 }
 
 local FRIEND_SPEECH = {
@@ -264,11 +265,12 @@ function SpaceRescue:draw()
         layer2:getWidth(),
         layer2:getHeight()
     )
-    lg.setColor(255, 255, 255, 255)
+    lg.setColor(255, 255, 255, 80)
     lg.draw(layer3,
         -off_x / scale1 / 100,
         -off_y / scale1 / 100
     )
+    lg.setColor(255, 255, 255, 255)
     lg.draw(layer2, quad2, 0, 0, 0, scale2)
     lg.setBlendMode("additive")
     lg.setColor(255, 255, 255, 0.25 * 255)

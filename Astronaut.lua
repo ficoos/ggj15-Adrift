@@ -7,8 +7,19 @@ local Timer = require 'hump.timer'
 
 local lg = love.graphics
 local lp = love.physics
+local la = love.audio
 
 local ASTRO_DENSITY = 0.2
+
+local RESCUE_SPEECH = {
+    la.newSource("data/sounds/foundguy/comewithme.ogg"),
+    la.newSource("data/sounds/foundguy/dontletgo.ogg"),
+    la.newSource("data/sounds/foundguy/grabthis.ogg"),
+    la.newSource("data/sounds/foundguy/hangon.ogg"),
+    la.newSource("data/sounds/foundguy/lookingforyou.ogg"),
+    la.newSource("data/sounds/foundguy/therewego.ogg"),
+}
+
 
 local Astronaut = class{}
 local img = lg.newImage("data/gfx/astronaut.png")
@@ -215,6 +226,7 @@ function Astronaut:onCollidesWith(target,coll)
         if target._connecting then
             return
         end
+        playOneOf(RESCUE_SPEECH)
         self._level:doOnNextUpdate(
             function()
                 target:startConnect(self)
