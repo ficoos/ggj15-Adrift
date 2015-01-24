@@ -11,6 +11,7 @@ local lp = love.physics
 local ASTRO_DENSITY = 0.2
 
 local Astronaut = class{}
+local img = lg.newImage("data/gfx/astronaut.png")
 
 function Astronaut:init(name, level, color)
     assert(level)
@@ -20,7 +21,8 @@ function Astronaut:init(name, level, color)
     self._color = color or {255, 255, 255, 255}
     self._level = level
     self._world = level:getWorld()
-    self._size = 50
+    self._height = 50
+    self._width = (img:getWidth() / img:getHeight()) * self._height
     self._position = {0, 0 }
     self._connectedTo = nil
     self._connectedFrom = nil
@@ -38,7 +40,7 @@ function Astronaut:_set_up_physics()
     local world = self._world
     local x, y = 0, 0
     local body = lp.newBody(world, x, y, "dynamic")
-    local shape = lp.newRectangleShape(x, y, self._size, self._size)
+    local shape = lp.newRectangleShape(x, y, self._width, self._height)
     local fixture = lp.newFixture(body, shape, ASTRO_DENSITY)
     fixture:setUserData(self)
 
@@ -72,10 +74,14 @@ end
 
 function Astronaut:draw()
     local x, y = self:get_position()
-    lg.setColor(self._color)
     lg.translate(x,y)
     lg.rotate(self._physics.body:getAngle())
-    lg.rectangle("fill", -self._size/2, -self._size/2, self._size,self._size)
+    --lg.setColor(self._color)
+    --lg.rectangle("line", -self._width/2, -self._height/2, self._width,self._height)
+    lg.setColor(255, 255, 255)
+    local factor = 1.2
+    local scale = math.max(img:getWidth(), img:getHeight()) / (self._height * factor)
+    lg.draw(img, -(self._width * factor) /2, -(self._height * factor)/2, 0, 1/scale)
 end
 
 function onHitAstronaut(a,b,coll)
@@ -169,11 +175,20 @@ end
 function connectAstronauts(objA,objB)
     objA._connectedTo = objB
     objB._connectedFrom = objA
-    local newJoint = newRevoluteJoint(objA,objB,
-        objA._size/2,
-        objA._size/2,
-        -objB._size/2,
-        -objB._size/2)
+    local newJoint = nil
+    if math.random() < 0.5 then
+        newJoint = newRevoluteJoint(objA,objB,
+            objA._width/2,
+            objA._height/2,
+            -objB._width/2,
+            -objB._height/2)
+    else
+        newJoint = newRevoluteJoint(objA,objB,
+            -objA._width/2,
+            objA._height/2,
+            objB._width/2,
+            -objB._height/2)
+    end
     objB._joint = newJoint
 
 end

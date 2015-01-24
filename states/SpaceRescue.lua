@@ -40,6 +40,12 @@ local SPAWN_RECT = {
     -2000, 2000
 }
 
+local layer1 = lg.newImage("data/gfx/layer1.jpg")
+layer1:setWrap("repeat", "repeat")
+local layer2 = lg.newImage("data/gfx/layer2.png")
+layer2:setWrap("repeat", "repeat")
+local layer3 = lg.newImage("data/gfx/layer3.jpg")
+
 function SpaceRescue:enter(prev, ...)
     lp.setMeter(2)
     self._world = lp.newWorld(0, 0, true)
@@ -83,8 +89,6 @@ function SpaceRescue:enter(prev, ...)
     self._camera = Camera(as1:get_position())
     self._zoom = 1
     self._camera.scale = self._zoom
-    self._bg = lg.newImage("data/gfx/space.jpg")
-    self._bg:setWrap("repeat", "repeat")
 
     table.insert(self._drawables.station, self._station)
 
@@ -93,6 +97,7 @@ function SpaceRescue:enter(prev, ...)
 
     self._end_message = nil
     self._game_over = false
+    lg.setBackgroundColor(1, 0, 32)
 end
 
 function SpaceRescue:onGameOver()
@@ -184,16 +189,32 @@ end
 
 function SpaceRescue:draw()
     local off_x, off_y = self._camera:pos()
-    local scale = self._camera.scale ^ 0.1
-    local quad = lg.newQuad(
-        off_x / scale / 8 - (lw.getWidth() / scale) / 2,
-        off_y / scale / 8 - (lw.getHeight() / scale) / 2,
-        lg.getWidth() / scale, lg.getHeight() / scale,
-        self._bg:getWidth(),
-        self._bg:getHeight()
+    local scale1 = self._camera.scale ^ 0.1
+    local scale2 = self._camera.scale ^ 0.03
+    local quad1 = lg.newQuad(
+        off_x / scale1 / 6 - (lw.getWidth() / scale1) / 2,
+        off_y / scale1 / 6 - (lw.getHeight() / scale1) / 2,
+        lg.getWidth() / scale1, lg.getHeight() / scale1,
+        layer1:getWidth(),
+        layer1:getHeight()
+    )
+    local quad2 = lg.newQuad(
+        off_x / scale2 / 32 - (lw.getWidth() / scale2) / 2,
+        off_y / scale2 / 32 - (lw.getHeight() / scale2) / 2,
+        lg.getWidth() / scale1, lg.getHeight() / scale2,
+        layer2:getWidth(),
+        layer2:getHeight()
     )
     lg.setColor(255, 255, 255, 255)
-    lg.draw(self._bg, quad, 0, 0, 0, scale)
+    lg.draw(layer3,
+        -off_x / scale1 / 100,
+        -off_y / scale1 / 100
+    )
+    lg.draw(layer2, quad2, 0, 0, 0, scale2)
+    lg.setBlendMode("additive")
+    lg.setColor(255, 255, 255, 0.25 * 255)
+    lg.draw(layer1, quad1, 0, 0, 0, scale1)
+    lg.setBlendMode("alpha")
     self._camera:attach()
     for _, layer in ipairs(self._drawables) do
         for _, obj in ipairs(layer) do
