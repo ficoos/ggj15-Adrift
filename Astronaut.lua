@@ -29,6 +29,21 @@ function Astronaut:init(name, level, color)
     self.isDead = false
     self:_set_up_physics()
     self.onDestroy = Event()
+    self:_setUpThruser()
+end
+
+function Astronaut:_setUpThruser()
+    local psystem = lg.newParticleSystem(lg.newImage("data/gfx/air_particle.png"), 1000)
+    psystem:setParticleLifetime(0.1, 0.2); -- Particles live at least 2s and at most 5s.
+    psystem:setEmissionRate(1);
+    psystem:setSizeVariation(1);
+    psystem:setEmitterLifetime(0);
+    psystem:setSizes(5);
+    psystem:setLinearAcceleration(-20, -20, 20, 20); -- Random movement in all directions.
+    psystem:setColors(255, 255, 255, 255, 255, 255, 255, 0); -- Fade to black.
+
+    self._air_part = psystem
+    self:thrust()
 end
 
 function Astronaut:getName()
@@ -53,6 +68,7 @@ end
 
 function Astronaut:update(dt)
     self._timer.update(dt)
+    self._air_part:update(dt)
     if self._connecting then
         local hand = self._connecting_hand
         local leg = self._connecting_leg
@@ -76,6 +92,13 @@ function Astronaut:update(dt)
             connectAstronauts(target, self:getLastInChain(), hand)
         end
     end
+    self._air_part:setPosition(self:get_position())
+end
+
+function Astronaut:thrust()
+    self._air_part:stop()
+    self._air_part:start()
+    self._air_part:emit(1)
 end
 
 function Astronaut:get_position()
@@ -96,6 +119,7 @@ end
 
 function Astronaut:draw()
     local x, y = self:get_position()
+    lg.draw(self._air_part)
     lg.push()
     lg.translate(x,y)
     lg.rotate(self._physics.body:getAngle())

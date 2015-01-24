@@ -124,6 +124,7 @@ function SpaceRescue:_push_player(dt)
     if self._player.isDead then
         return
     end
+    self._player:thrust()
     local x, y = self._camera:worldCoords(lm.getPosition())
     local ax, ay = self._drawables.agents[1]:get_position()
     local theta = util.angle_towards(ax, ay, x, y)
@@ -131,7 +132,10 @@ function SpaceRescue:_push_player(dt)
     self._air = self._air - dt * PUSH_DEPLETION_SEC
     local ix = -math.cos(theta) * FORCE * dt
     local iy = -math.sin(theta) * FORCE * dt
-    self._drawables.agents[1]:apply_force(ix, iy)
+    local x, y = util.rotateAroundPoint(theta + math.pi / 2, ax, ay, ax, ay - 30)
+    --local x, y = util.rotateAroundPoint(rot, ax, ay, ax, ay + 20)
+    --self._thrust_point = {x, y}
+    self._drawables.agents[1]:apply_force(ix, iy, x, y)
 end
 
 function SpaceRescue:getWorld()
@@ -241,6 +245,11 @@ function SpaceRescue:draw()
     if show_spawn_rect then
         lg.rectangle("line", SPAWN_RECT[1], SPAWN_RECT[3], SPAWN_RECT[2] - SPAWN_RECT[1], SPAWN_RECT[4] - SPAWN_RECT[3])
     end
+    if self._thrust_point then
+        lg.setPointSize(10)
+        lg.point(self._thrust_point[1], self._thrust_point[2])
+        lg.setPointSize(1)
+    end
     self._camera:detach()
     lg.setColor(255, 255, 0, 255)
     lg.print("Floating Friends: " .. self.floating_friends, 10, 10)
@@ -251,6 +260,7 @@ function SpaceRescue:draw()
         lg.setColor(255, 255, 255, 255)
         lg.printf(self._end_message, 0, (lw.getHeight() - lg.getFont():getHeight()) / 2, lw:getWidth(), "center")
     end
+
 end
 
 function SpaceRescue:_spawn_asteroid()
