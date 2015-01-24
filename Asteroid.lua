@@ -13,6 +13,14 @@ local DENSITY = 1
 local asteroid2 = lg.newImage("data/gfx/asteroid2.png")
 local thud = la.newSource("data/sounds/asteroid_hit.ogg")
 
+local ASTRO_HIT = {
+ la.newSource("data/sounds/hit1.ogg"),
+ la.newSource("data/sounds/hit2.ogg"),
+ la.newSource("data/sounds/hit3.ogg"),
+ la.newSource("data/sounds/hit4.ogg"),
+
+}
+
 function Asteroid:init(world, radius, name)
     assert(world)
     assert(radius)
@@ -61,6 +69,8 @@ end
 function Asteroid:onCollidesWith(other, coll)
     if other._type == "Star" then
         self:destroy()
+    elseif other._type == "astronaut" then
+        playOneOf(ASTRO_HIT)
     else
         thud:clone():play()
     end

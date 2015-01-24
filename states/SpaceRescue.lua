@@ -7,6 +7,7 @@ local util = require 'util'
 local Camera = require 'hump.camera'
 local debugWorldDraw = require 'debugWorldDraw'
 local Timer = require 'hump.timer'
+local GameState = require 'hump.gamestate'
 
 local lg = love.graphics
 local lp = love.physics
@@ -52,6 +53,9 @@ local layer2 = lg.newImage("data/gfx/layer2.png")
 layer2:setWrap("repeat", "repeat")
 local layer3 = lg.newImage("data/gfx/layer3.jpg")
 
+local ox_empty = lg.newImage("data/gfx/ox_empty.png")
+local ox_full = lg.newImage("data/gfx/ox_full.png")
+
 local PLAYER_SPEECH = {
     la.newSource("data/sounds/comingrightover.ogg"),
     la.newSource("data/sounds/no_problem.ogg"),
@@ -61,6 +65,17 @@ local PLAYER_SPEECH = {
     la.newSource("data/sounds/onesmallstep.ogg"),
     la.newSource("data/sounds/rogetthat.ogg"),
     la.newSource("data/sounds/houston.ogg"),
+    la.newSource("data/sounds/astro3/gettinghot.ogg"),
+    la.newSource("data/sounds/astro3/givehand.ogg"),
+    la.newSource("data/sounds/astro3/guys.ogg"),
+    la.newSource("data/sounds/astro3/house.ogg"),
+    la.newSource("data/sounds/astro3/isthere.ogg"),
+    la.newSource("data/sounds/astro3/ship.ogg"),
+    la.newSource("data/sounds/astro3/weee.ogg"),
+    la.newSource("data/sounds/astro3/whathappened.ogg"),
+    la.newSource("data/sounds/hit2.ogg"),
+    la.newSource("data/sounds/hit3.ogg"),
+
 }
 
 local FRIEND_SPEECH = {
@@ -140,13 +155,14 @@ function SpaceRescue:enter(prev, ...)
 
     table.insert(self._drawables.station, self._station)
 
-    as1:set_position(lw.getWidth()/2+100, lw.getHeight()/2)
+    as1:set_position(320, 100)
     as1:set_angle(0.3)
 
     self._end_message = nil
     self._game_over = false
     lg.setBackgroundColor(1, 0, 32)
     self:notify("Save your friends!")
+    self._timer.add(4, function() self:notify("Right click to zoom out") end)
 end
 
 function SpaceRescue:onGameOver()
@@ -308,11 +324,21 @@ function SpaceRescue:draw()
         lg.setPointSize(1)
     end
     self._camera:detach()
+    lg.setColor(255, 255, 255, 255)
+    local oxx = (lw.getWidth() - ox_full:getWidth() * 0.25) * 0.5
+    lg.draw(ox_empty, oxx, 10, 0, 0.25)
+    local quad = lg.newQuad(
+        0, 0,
+        ox_full:getWidth() * self._air, ox_full:getHeight(),
+        ox_full:getWidth(), ox_full:getHeight()
+    )
+    lg.draw(ox_full, quad, oxx, 10, 0, 0.25)
+
     lg.setColor(255, 255, 0, 255)
-    lg.print("Floating Friends: " .. self.floating_friends, 10, 10)
-    lg.print("Dead Friends: " .. (ASTRO_FRIENDS_NUM - self.floating_friends - self.rescued_friends), 10, 24)
-    lg.print("Rescued Friends: " .. (self.rescued_friends), 10, 38)
-    lg.print(string.format("Air: %.2f", (self._air * 100)), 10, 52)
+    --lg.print("Floating Friends: " .. self.floating_friends, 10, 10)
+    --lg.print("Dead Friends: " .. (ASTRO_FRIENDS_NUM - self.floating_friends - self.rescued_friends), 10, 24)
+    --lg.print("Rescued Friends: " .. (self.rescued_friends), 10, 38)
+    --lg.print(string.format("Air: %.2f", (self._air * 100)), 10, 52)
     local fnt = lg.getFont()
     lg.setFont(NOTIFY_FONT)
     lg.setColor(0, 0, 0, self._opacity)
@@ -329,7 +355,6 @@ function SpaceRescue:draw()
     end
 
     lg.setFont(fnt)
-
 end
 
 function SpaceRescue:notify(msg)
@@ -380,7 +405,11 @@ function SpaceRescue:_spawn_asteroid()
 end
 
 function SpaceRescue:keypressed(key)
-    if key == "a" then
+    if key == "escape" then
+        GameState.switch(self)
+    elseif key == "f11" then
+        lw.setFullscreen(not lw.getFullscreen(), "desktop")
+    elseif key == "a" then
         self:_spawn_asteroid()
     elseif key == "n" then
         self:notify("Hello World")
@@ -399,9 +428,9 @@ function SpaceRescue:mousepressed(x, y, button)
         playOneOf(PLAYER_SPEECH)
     elseif button == "r" then
         self._zoom = MIN_ZOOM
-    elseif button == "wu" then
+    elseif button == "wu" and false then
         self._zoom = math.min(self._zoom * ZOOM_FACTOR, MAX_ZOOM)
-    elseif button == "wd" then
+    elseif button == "wd" and false then
         self._zoom = math.max(self._zoom / ZOOM_FACTOR, MIN_ZOOM)
     end
 end

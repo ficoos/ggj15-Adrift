@@ -139,6 +139,9 @@ function Astronaut:draw()
     lg.setColor(255, 255, 255)
     local factor = 1.2
     local scale = math.max(img:getWidth(), img:getHeight()) / (self._height * factor)
+    if self._name == "player" then
+        lg.setColor(255, 230, 160)
+    end
     lg.draw(img, -(self._width * factor) /2, -(self._height * factor)/2, 0, 1/scale)
     lg.setColor(255, 0, 0)
     lg.pop()
