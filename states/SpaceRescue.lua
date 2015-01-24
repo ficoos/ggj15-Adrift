@@ -11,7 +11,7 @@ local lg = love.graphics
 local lp = love.physics
 local lm = love.mouse
 local lw = love.window
-local ls = love.sound
+local la = love.audio
 
 local SpaceRescue = {}
 
@@ -27,6 +27,7 @@ local MIN_ZOOM = 0.1
 local MAX_ZOOM = 2
 local ZOOM_SPEED = .005
 local ASTRO_FRIENDS_NUM = 20
+local ASTRO_STILL_NUM = 20
 
 local ASTEROID_SPAW_RATE_SEC = 1
 
@@ -47,8 +48,19 @@ local layer2 = lg.newImage("data/gfx/layer2.png")
 layer2:setWrap("repeat", "repeat")
 local layer3 = lg.newImage("data/gfx/layer3.jpg")
 
+local PLAYER_SPEECH = {
+    la.newSource("data/sounds/comingrightover.ogg"),
+    la.newSource("data/sounds/no_problem.ogg"),
+    la.newSource("data/sounds/onmyway.ogg"),
+}
+
 function playOneOf(sndList)
-    local snd = sndList[math.random(1, #sndList)]:clone()
+    local curr = sndList["current"]
+    if curr and curr:isPlaying() then
+        return
+    end
+    local snd = sndList[math.random(1, #sndList)]
+    sndList["current"] = snd
     snd:play()
 end
 
@@ -319,7 +331,9 @@ function SpaceRescue:keyreleased(key)
 end
 
 function SpaceRescue:mousepressed(x, y, button)
-    if button == "r" then
+    if button == "l" then
+        playOneOf(PLAYER_SPEECH)
+    elseif button == "r" then
         self._zoom = MIN_ZOOM
     elseif button == "wu" then
         self._zoom = math.min(self._zoom * ZOOM_FACTOR, MAX_ZOOM)
