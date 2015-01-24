@@ -310,7 +310,6 @@ function SpaceRescue:mousepressed(x, y, button)
 end
 
 function SpaceRescue:mousereleased(x, y, button)
-    print(x, y, button)
 end
 
 return SpaceRescue

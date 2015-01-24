@@ -26,7 +26,6 @@ function Astronaut:init(name, level, color)
     self._position = {0, 0 }
     self._connectedTo = nil
     self._connectedFrom = nil
-    self._lastInChain = self
     self.isDead = false
     self:_set_up_physics()
     self.onDestroy = Event()
@@ -54,6 +53,29 @@ end
 
 function Astronaut:update(dt)
     self._timer.update(dt)
+    if self._connecting then
+        local hand = self._connecting_hand
+        local leg = self._connecting_leg
+        local x, y = self:getHandPosition(hand)
+        local tx, ty = self._connecting_target:getLastInChain():getLegPosition(leg)
+        local dx = tx - x
+        local dy = ty - y
+        local dist = math.sqrt(dx * dx + dy * dy)
+        local theta = util.angle_towards(tx, ty, x, y)
+        local x, y = self:get_position()
+        local d = self._connecting_duration
+        self._connecting_duration = d + dt
+        local speed = 5 * d
+        local nx, ny = x + math.cos(theta) * speed , y + math.sin(theta) * speed
+        self:set_position(nx, ny)
+        if (dist < 6) then
+            self._connecting = nil
+            local target = self._connecting_target:getLastInChain()
+            self._connecting_target = nil
+            self._physics.body:setActive(true)
+            connectAstronauts(target, self:getLastInChain(), hand)
+        end
+    end
 end
 
 function Astronaut:get_position()
@@ -74,6 +96,7 @@ end
 
 function Astronaut:draw()
     local x, y = self:get_position()
+    lg.push()
     lg.translate(x,y)
     lg.rotate(self._physics.body:getAngle())
     --lg.setColor(self._color)
@@ -82,6 +105,18 @@ function Astronaut:draw()
     local factor = 1.2
     local scale = math.max(img:getWidth(), img:getHeight()) / (self._height * factor)
     lg.draw(img, -(self._width * factor) /2, -(self._height * factor)/2, 0, 1/scale)
+    lg.setColor(255, 0, 0)
+    lg.pop()
+    --local lhx, lhy = self:getHandPosition("left")
+    --local rhx, rhy = self:getHandPosition("right")
+    --local llx, lly = self:getLegPosition("left")
+    --local rlx, rly = self:getLegPosition("right")
+    --if self._name == "player" then
+    --    lg.circle("fill", lhx, lhy, 3)
+    --    lg.circle("fill", rhx, rhy, 3)
+    --    lg.circle("fill", llx, lly, 3)
+    --    lg.circle("fill", rlx, rly, 3)
+    --end
 end
 
 function onHitAstronaut(a,b,coll)
@@ -134,20 +169,36 @@ function Astronaut:disconnect()
     self._joint:destroy()
 end
 
+function Astronaut:startConnect(target)
+    self._connecting = true
+    self._physics.body:setActive(false)
+    self._connecting_target = target
+    self._connecting_duration = 0.1
+    if math.random() > 0.5 then
+        self._connecting_leg = "left"
+        self._connecting_hand = "right"
+    else
+        self._connecting_leg = "right"
+        self._connecting_hand = "left"
+    end
+end
+
 function Astronaut:onCollidesWith(target,coll)
     if (target._type=="astronaut"
         and self:getName()=="player"
         and not self:isInChain(target)
     ) then
+        if target._connecting then
+            return
+        end
         self._level:doOnNextUpdate(
             function()
-                connectAstronauts(self:getLastInChain(), target)
-                self._lastInChain=target
+                target:startConnect(self)
             end
         )
     elseif (
         target._type=="SpaceStation"
-        and self._lastInChain ~= self
+        and self:getLastInChain() ~= self
         and self:getName()=="player"
     ) then
         self._level:doOnNextUpdate(function()
@@ -175,12 +226,50 @@ function Astronaut:onCollidesWith(target,coll)
     end;
 end
 
+function Astronaut:getHandPosition(which)
+    local px, py = self:get_position()
+    if which == "right" then
+        return util.rotateAroundPoint(
+            self._physics.body:getAngle(),
+            px, py,
+            self._width/2 + px,
+            -self._height/2 + py
+        )
+    else
+        return util.rotateAroundPoint(
+            self._physics.body:getAngle(),
+            px, py,
+            -self._width/2 + px,
+            -self._height/2 + py
+        )
+    end
+end
+
+function Astronaut:getLegPosition(which)
+    local px, py = self:get_position()
+    if which == "right" then
+        return util.rotateAroundPoint(
+            self._physics.body:getAngle(),
+            px, py,
+            self._width/2 + px,
+            self._height/2 + py
+        )
+    else
+        return util.rotateAroundPoint(
+            self._physics.body:getAngle(),
+            px, py,
+            -self._width/2 + px,
+            self._height/2 + py
+        )
+    end
+end
+
 --connect B to A
-function connectAstronauts(objA,objB)
+function connectAstronauts(objA,objB, dir)
     objA._connectedTo = objB
     objB._connectedFrom = objA
     local newJoint = nil
-    if math.random() < 0.5 then
+    if dir == "left" then
         newJoint = newRevoluteJoint(objA,objB,
             objA._width/2,
             objA._height/2,
